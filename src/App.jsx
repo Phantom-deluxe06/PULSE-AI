@@ -5,6 +5,7 @@ import BookingView from './components/BookingView';
 import DashboardView from './components/DashboardView';
 import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
+import BookingConfirmation from './components/BookingConfirmation';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
 
@@ -38,6 +39,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showEmergency, setShowEmergency] = useState(false);
+  const [confirmedAppointment, setConfirmedAppointment] = useState(null);
 
   // Booking State
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -87,7 +89,8 @@ function App() {
     };
 
     setAppointments(prev => [...prev, newAppointment]);
-    setCurrentView('dashboard');
+    setConfirmedAppointment(newAppointment);
+    setCurrentView('confirmation');
     setTriageResult(null);
     setSymptoms('');
     setSelectedSlot(null);
@@ -144,6 +147,16 @@ function App() {
             selectedSlot={selectedSlot}
             setSelectedSlot={setSelectedSlot}
             handleBookSlot={handleBookSlot}
+          />
+        )}
+
+        {currentView === 'confirmation' && confirmedAppointment && (
+          <BookingConfirmation
+            appointment={confirmedAppointment}
+            onGoToDashboard={() => {
+              setConfirmedAppointment(null);
+              setCurrentView('dashboard');
+            }}
           />
         )}
 
