@@ -5,7 +5,7 @@ export async function analyzeSymptoms(symptomText) {
         throw new Error("API key is missing. Please set VITE_GEMINI_API_KEY in your .env file.");
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     const validDepts = ["General Medicine", "Cardiology", "Neurology", "Pediatrics", "Orthopedics"];
 
