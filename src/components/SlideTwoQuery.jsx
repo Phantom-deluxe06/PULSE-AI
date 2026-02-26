@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FileUp, MessageSquare, HeartPulse, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { FileUp, MessageSquare, HeartPulse, ArrowRight, ArrowLeft, Mic, MicOff } from 'lucide-react';
 
 export default function SlideTwoQuery({ setCurrentView, updateTriageState, initialData }) {
     const [formData, setFormData] = useState({
@@ -9,6 +9,47 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
         symptoms: '',
         ...initialData // Prefill if navigating back
     });
+
+    // Voice input state
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef(null);
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                setFormData(prev => ({
+                    ...prev,
+                    symptoms: prev.symptoms ? `${prev.symptoms} ${transcript}` : transcript
+                }));
+                setIsListening(false);
+            };
+
+            recognition.onerror = () => setIsListening(false);
+            recognition.onend = () => setIsListening(false);
+            recognitionRef.current = recognition;
+        }
+    }, []);
+
+    const toggleVoice = () => {
+        if (!recognitionRef.current) {
+            alert("Voice input is not supported in this browser. Please use Chrome or Edge.");
+            return;
+        }
+        if (isListening) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        } else {
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -83,7 +124,7 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
                         <div className="flex justify-between items-end mb-4">
                             <label className="block text-sm font-bold text-slate-900">How urgent is your concern?</label>
                             <span className={`text-lg font-black ${formData.severity >= 8 ? 'text-red-600' :
-                                    formData.severity >= 5 ? 'text-amber-500' : 'text-emerald-500'
+                                formData.severity >= 5 ? 'text-amber-500' : 'text-emerald-500'
                                 }`}>
                                 {formData.severity} / 10
                             </span>
@@ -104,7 +145,7 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
                         </div>
                     </div>
 
-                    {/* Message Box */}
+                    {/* Message Box with Voice Input */}
                     <div>
                         <label className="block text-sm font-bold text-slate-900 mb-2">Symptom Details</label>
                         <div className="relative">
@@ -115,10 +156,25 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
                                 onChange={handleChange}
                                 placeholder="Please describe your symptoms, how long you've had them, and any previous treatments..."
                                 rows="4"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                                className={`w-full pl-12 pr-14 py-3 rounded-xl border ${isListening ? 'border-red-400 ring-2 ring-red-300' : 'border-slate-200'} bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none`}
                                 required
                             />
+                            {/* Mic Button */}
+                            <button
+                                type="button"
+                                onClick={toggleVoice}
+                                title="Click to speak your symptoms"
+                                className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all ${isListening
+                                        ? 'bg-red-500 text-white animate-pulse'
+                                        : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
+                                    }`}
+                            >
+                                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                            </button>
                         </div>
+                        {isListening && (
+                            <p className="text-center text-red-500 text-sm font-medium animate-pulse mt-2">🎙 Listening... Speak your symptoms</p>
+                        )}
                     </div>
 
                     {/* File Upload Mock */}
@@ -164,8 +220,8 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
                                 type="submit"
                                 disabled={!isFormValid}
                                 className={`w-full sm:w-auto group relative px-8 py-3.5 rounded-xl font-bold flex items-center justify-center transition-all ${isFormValid
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
-                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
+                                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                     }`}
                             >
                                 <span className="relative z-10 flex items-center">
