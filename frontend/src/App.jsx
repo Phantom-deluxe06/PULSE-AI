@@ -8,6 +8,10 @@ import SlideTwoQuery from './components/SlideTwoQuery';
 import SlideThreePrefs from './components/SlideThreePrefs';
 import BookingView from './components/BookingView';
 import DashboardView from './components/DashboardView';
+import FindDoctorView from './components/FindDoctorView';
+import SymptomCheckerView from './components/SymptomCheckerView';
+import PharmacyView from './components/PharmacyView';
+import MedicalRecordsView from './components/MedicalRecordsView';
 import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
@@ -40,6 +44,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser);
   const [currentView, setCurrentView] = useState(currentUser ? 'dashboard' : 'home');
 
+  // Core State
   const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
   const [triageHistory, setTriageHistory] = useState(() => loadFromStorage(STORAGE_HISTORY));
   const [triageResult, setTriageResult] = useState(null);
@@ -49,15 +54,20 @@ function App() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [confirmedAppointment, setConfirmedAppointment] = useState(null);
 
+  // Booking State
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
-  // Multi-slide triage state (Person B's 3-step flow)
+  // Multi-slide triage state
   const [triageState, setTriageState] = useState({});
   const updateTriageState = (slide, data) => {
     setTriageState(prev => ({ ...prev, [slide]: data }));
   };
 
+  // Find Doctor filter from Symptom Checker
+  const [filterDepartment, setFilterDepartment] = useState(null);
+
+  // Persist to localStorage
   useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
   useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
@@ -80,20 +90,17 @@ function App() {
     setCurrentView('home');
   };
 
-  const handleTriage = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!symptoms.trim()) return;
-
+  const executeTriage = async (symptomsToAnalyze) => {
     setIsLoading(true);
     setError(null);
     setTriageResult(null);
 
     try {
-      const result = await analyzeSymptoms(symptoms);
+      const result = await analyzeSymptoms(symptomsToAnalyze);
       setTriageResult(result);
 
       setTriageHistory(prev => [{
-        symptoms,
+        symptoms: symptomsToAnalyze,
         department: result.department,
         urgency: result.urgency,
         summary: result.summary,
@@ -109,6 +116,12 @@ function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTriage = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!symptoms.trim()) return;
+    executeTriage(symptoms);
   };
 
   const handleBookSlot = () => {
@@ -270,7 +283,31 @@ function App() {
             <DashboardView
               setCurrentView={setCurrentView}
               appointments={appointments}
+              triageHistory={triageHistory}
             />
+          )}
+
+          {currentView === 'find-doctor' && (
+            <FindDoctorView
+              setCurrentView={setCurrentView}
+              filterDepartment={filterDepartment}
+            />
+          )}
+
+          {currentView === 'symptom-checker' && (
+            <SymptomCheckerView
+              setCurrentView={setCurrentView}
+              analyzeSymptomsFn={analyzeSymptoms}
+              setFilterDepartment={setFilterDepartment}
+            />
+          )}
+
+          {currentView === 'pharmacy' && (
+            <PharmacyView />
+          )}
+
+          {currentView === 'records' && (
+            <MedicalRecordsView triageHistory={triageHistory} />
           )}
 
           {currentView === 'history' && (

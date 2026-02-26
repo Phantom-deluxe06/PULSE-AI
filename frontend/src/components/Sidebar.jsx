@@ -1,11 +1,12 @@
-import { LayoutDashboard, Stethoscope, Clock, CalendarCheck, X, Menu, LogOut, UserCircle, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, UserSearch, HeartPulse, Pill, FileText, X, Menu, CalendarCheck, LogOut, UserCircle } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'patient-details', label: 'Start Triage', icon: ClipboardList },
-    { id: 'query', label: 'Symptoms Check', icon: Stethoscope },
-    { id: 'history', label: 'Triage History', icon: Clock },
+    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'find-doctor', label: 'Find a Doctor', icon: UserSearch },
+    { id: 'symptom-checker', label: 'AI Triage', icon: HeartPulse },
+    { id: 'pharmacy', label: 'Pharmacy & Refills', icon: Pill },
+    { id: 'records', label: 'Medical Records', icon: FileText },
 ];
 
 export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout }) {
@@ -16,7 +17,7 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
             {/* Mobile hamburger */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="lg:hidden fixed bottom-6 left-6 z-40 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-700 transition"
+                className="lg:hidden fixed bottom-6 left-6 z-40 w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-700 transition active:scale-95"
             >
                 <Menu className="w-5 h-5" />
             </button>
@@ -34,8 +35,11 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
 
                 {/* Logo */}
                 <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-blue-600 p-1.5 rounded-lg">
+                    <div
+                        className="flex items-center gap-2.5 cursor-pointer"
+                        onClick={() => { setCurrentView('home'); setIsOpen(false); }}
+                    >
+                        <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2 rounded-xl shadow-sm">
                             <CalendarCheck className="w-5 h-5 text-white" />
                         </div>
                         <h1 className="text-xl font-bold tracking-tight text-slate-900">
@@ -54,8 +58,8 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
                 {currentUser && (
                     <div className="px-4 py-4 border-b border-slate-100">
                         <div className="flex items-center gap-3 px-2">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <UserCircle className="w-6 h-6 text-blue-600" />
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                {currentUser.name?.[0]?.toUpperCase() || 'P'}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-slate-900 truncate">{currentUser.name}</p>
@@ -67,6 +71,7 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
 
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+                    <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Main Menu</p>
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = currentView === item.id;
@@ -75,8 +80,8 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
                                 key={item.id}
                                 onClick={() => { setCurrentView(item.id); setIsOpen(false); }}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                        ? 'bg-blue-50 text-blue-700 font-semibold'
-                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                    ? 'bg-blue-50 text-blue-700 font-semibold shadow-sm'
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                     }`}
                             >
                                 <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
@@ -100,7 +105,7 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
 
                 {/* Footer */}
                 <div className="px-6 py-3 border-t border-slate-100">
-                    <p className="text-xs text-slate-400 text-center">PULSE AI v1.2</p>
+                    <p className="text-xs text-slate-400 text-center">PULSE AI v2.0</p>
                 </div>
             </aside>
         </>
