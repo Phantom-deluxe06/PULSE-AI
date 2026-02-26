@@ -12,9 +12,39 @@ export default function PatientDetailsView({ setCurrentView }) {
         patientId: ''
     });
 
+    const [errors, setErrors] = useState({});
+
+    const formatPhoneNumber = (value) => {
+        // Strip all non-digits
+        const phoneNumber = value.replace(/[^\d]/g, '');
+        const phoneNumberLength = phoneNumber.length;
+        if (phoneNumberLength < 4) return phoneNumber;
+        if (phoneNumberLength < 7) {
+            return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+        }
+        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(
+            3,
+            6
+        )}-${phoneNumber.slice(6, 10)}`;
+    };
+
+    const validatePhone = (phone) => {
+        const rawDigits = phone.replace(/[^\d]/g, '');
+        return rawDigits.length === 10;
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'phone') {
+            const formatted = formatPhoneNumber(value);
+            setFormData(prev => ({ ...prev, phone: formatted }));
+            if (errors.phone && validatePhone(formatted)) {
+                setErrors(prev => ({ ...prev, phone: null }));
+            }
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleReturningStatus = (status) => {
@@ -23,18 +53,30 @@ export default function PatientDetailsView({ setCurrentView }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Here we would typically save the data to a global state or context
-        // For now, we proceed to the query view
+
+        // Final Validation
+        const newErrors = {};
+        if (!validatePhone(formData.phone)) {
+            newErrors.phone = "Please enter a valid 10-digit phone number.";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         setCurrentView('query');
     };
 
     const isFormValid =
-        formData.firstName &&
-        formData.lastName &&
-        formData.phone &&
-        formData.age &&
-        formData.gender &&
-        formData.returningPatient !== null;
+        formData.firstName.trim() !== '' &&
+        formData.lastName.trim() !== '' &&
+        formData.phone.trim() !== '' &&
+        formData.age !== '' &&
+        formData.gender !== '' &&
+        formData.returningPatient !== null &&
+        (formData.returningPatient === 'no' || (formData.returningPatient === 'yes' && formData.patientId !== ''))
+        ;
 
     return (
         <div className="animate-in fade-in zoom-in-95 duration-500 max-w-2xl mx-auto py-8 px-4 sm:px-6">
@@ -62,8 +104,8 @@ export default function PatientDetailsView({ setCurrentView }) {
                                     type="button"
                                     onClick={() => handleReturningStatus('yes')}
                                     className={`flex-1 py-3 px-4 rounded-xl font-semibold border-2 transition-all ${formData.returningPatient === 'yes'
-                                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                            : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
+                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
                                         }`}
                                 >
                                     Yes, I'm returning
@@ -72,8 +114,8 @@ export default function PatientDetailsView({ setCurrentView }) {
                                     type="button"
                                     onClick={() => handleReturningStatus('no')}
                                     className={`flex-1 py-3 px-4 rounded-xl font-semibold border-2 transition-all ${formData.returningPatient === 'no'
-                                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                            : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
+                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
                                         }`}
                                 >
                                     No, I'm a new patient
@@ -143,10 +185,12 @@ export default function PatientDetailsView({ setCurrentView }) {
                                         value={formData.phone}
                                         onChange={handleChange}
                                         placeholder="(555) 123-4567"
-                                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        maxLength="14"
+                                        className={`w-full pl-12 pr-4 py-3 rounded-xl border ${errors.phone ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-slate-50'} focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
                                         required
                                     />
                                 </div>
+                                {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone}</p>}
                             </div>
 
                             {/* Age & Gender Row */}
@@ -205,8 +249,8 @@ export default function PatientDetailsView({ setCurrentView }) {
                                 type="submit"
                                 disabled={!isFormValid}
                                 className={`w-full sm:w-auto group relative px-8 py-3.5 rounded-xl font-bold flex items-center justify-center transition-all ${isFormValid
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
-                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
+                                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                     }`}
                             >
                                 <span className="relative z-10 flex items-center">

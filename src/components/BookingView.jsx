@@ -5,8 +5,32 @@ export default function BookingView({ setCurrentView }) {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
     const [isBooked, setIsBooked] = useState(false);
+    const [bookingError, setBookingError] = useState(null);
 
-    const dates = ['Today', 'Tomorrow', 'Oct 28', 'Oct 29', 'Oct 30'];
+    // Generate the next 5 days
+    const generateDates = () => {
+        const list = [];
+        const today = new Date();
+        for (let i = 0; i < 5; i++) {
+            const nextDate = new Date(today);
+            nextDate.setDate(today.getDate() + i);
+
+            let label = '';
+            if (i === 0) label = 'Today';
+            else if (i === 1) label = 'Tomorrow';
+            else {
+                label = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            list.push({
+                label,
+                dateObj: nextDate
+            });
+        }
+        return list;
+    };
+
+    const dates = generateDates();
     const times = ['09:00 AM', '10:30 AM', '11:00 AM', '01:00 PM', '02:30 PM', '04:00 PM'];
 
     // Hardcoded for UI visualization, Person A will connect this later
@@ -14,6 +38,25 @@ export default function BookingView({ setCurrentView }) {
     const urgencyLevel = 4; // High Urgency
 
     const handleBook = () => {
+        // Robust validation: Check if selected date/time is actually in the future (relevant for 'Today')
+        if (selectedDate?.label === 'Today') {
+            const [timePart, modifier] = selectedTime.split(' ');
+            let [hours, minutes] = timePart.split(':');
+            hours = parseInt(hours, 10);
+
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+
+            const selectedDateTime = new Date();
+            selectedDateTime.setHours(hours, parseInt(minutes, 10), 0, 0);
+
+            if (selectedDateTime <= new Date()) {
+                setBookingError("Please select a valid future time for today's date.");
+                return;
+            }
+        }
+
+        setBookingError(null);
         setIsBooked(true);
         setTimeout(() => {
             setCurrentView('dashboard');
@@ -63,16 +106,19 @@ export default function BookingView({ setCurrentView }) {
                     <Calendar className="w-5 h-5 text-slate-500" /> Select Date
                 </h4>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-                    {dates.map((date) => (
+                    {dates.map((dateItem) => (
                         <button
-                            key={date}
-                            onClick={() => setSelectedDate(date)}
-                            className={`shrink-0 px-5 py-3 rounded-xl font-medium text-sm transition-all border ${selectedDate === date
-                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                            key={dateItem.label}
+                            onClick={() => {
+                                setSelectedDate(dateItem);
+                                setBookingError(null);
+                            }}
+                            className={`shrink-0 px-5 py-3 rounded-xl font-medium text-sm transition-all border ${selectedDate?.label === dateItem.label
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
                                 }`}
                         >
-                            {date}
+                            {dateItem.label}
                         </button>
                     ))}
                 </div>
@@ -88,10 +134,13 @@ export default function BookingView({ setCurrentView }) {
                         {times.map((time) => (
                             <button
                                 key={time}
-                                onClick={() => setSelectedTime(time)}
+                                onClick={() => {
+                                    setSelectedTime(time);
+                                    setBookingError(null);
+                                }}
                                 className={`px-4 py-3 rounded-xl font-medium text-sm transition-all border ${selectedTime === time
-                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
                                     }`}
                             >
                                 {time}
@@ -105,17 +154,18 @@ export default function BookingView({ setCurrentView }) {
             <div className="border-t border-slate-200 pt-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="text-sm text-slate-600 text-center sm:text-left">
                     {selectedDate && selectedTime ? (
-                        <p>Selected: <strong className="text-slate-900">{selectedDate}</strong> at <strong className="text-slate-900">{selectedTime}</strong></p>
+                        <p>Selected: <strong className="text-slate-900">{selectedDate.label}</strong> at <strong className="text-slate-900">{selectedTime}</strong></p>
                     ) : (
                         <p>Please select a date and time to continue.</p>
                     )}
+                    {bookingError && <p className="text-red-500 text-sm mt-1 font-medium bg-red-50 p-2 rounded-lg">{bookingError}</p>}
                 </div>
                 <button
                     onClick={handleBook}
                     disabled={!selectedDate || !selectedTime}
                     className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center transition-all ${selectedDate && selectedTime
-                            ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                         }`}
                 >
                     Confirm Appointment <ChevronRight className="ml-1 w-5 h-5" />
