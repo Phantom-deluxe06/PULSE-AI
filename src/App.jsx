@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import HomeView from './components/HomeView';
 import PatientDetailsView from './components/PatientDetailsView';
+import SlideTwoQuery from './components/SlideTwoQuery';
+import SlideThreePrefs from './components/SlideThreePrefs';
 import BookingView from './components/BookingView';
 import DashboardView from './components/DashboardView';
 import QueryView from './components/QueryView';
@@ -32,6 +34,7 @@ function saveToStorage(key, data) {
 }
 
 function App() {
+  // Views: home, patient-details, slide-two, slide-three, query, booking, dashboard, confirmation, history
   const [currentView, setCurrentView] = useState('home');
 
   const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
@@ -46,23 +49,33 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
+  // Multi-step Triage Form State
+  const [triageState, setTriageState] = useState({
+    slideOne: {},
+    slideTwo: {},
+    slideThree: {}
+  });
   useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
   useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
-  const handleTriage = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!symptoms.trim()) return;
+  const updateTriageState = (slideName, data) => {
+    setTriageState(prev => ({
+      ...prev,
+      [slideName]: data
+    }));
+  };
 
+  const executeTriage = async (symptomsToAnalyze) => {
     setIsLoading(true);
     setError(null);
     setTriageResult(null);
 
     try {
-      const result = await analyzeSymptoms(symptoms);
+      const result = await analyzeSymptoms(symptomsToAnalyze);
       setTriageResult(result);
 
       setTriageHistory(prev => [{
-        symptoms,
+        symptoms: symptomsToAnalyze,
         department: result.department,
         urgency: result.urgency,
         summary: result.summary,
@@ -78,6 +91,32 @@ function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTriageSubmit = (finalSlideData) => {
+    const fullData = {
+      ...triageState.slideOne,
+      ...triageState.slideTwo,
+      ...finalSlideData
+    };
+
+    console.log("Submitting to AI Triage Engine:", fullData);
+
+    // Compile symptoms into a paragraph for the AI
+    const compiledSymptoms = `Patient Issue: ${fullData.symptoms}\nSeverity: ${fullData.severity}/10\nQuery Type: ${fullData.queryType}\nRequested Department: ${fullData.department}`;
+    setSymptoms(compiledSymptoms);
+
+    // Proceed to loading state on the query view
+    setCurrentView('query');
+
+    // Fire off triage automatically after compiling
+    executeTriage(compiledSymptoms);
+  };
+
+  const handleTriage = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!symptoms.trim()) return;
+    executeTriage(symptoms);
   };
 
   const handleBookSlot = () => {
@@ -141,7 +180,30 @@ function App() {
       <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${showSidebar ? 'lg:ml-64' : ''}`}>
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
 
-        {currentView === 'patient-details' && <PatientDetailsView setCurrentView={setCurrentView} />}
+        {currentView === 'patient-details' && (
+          <PatientDetailsView
+            setCurrentView={setCurrentView}
+            updateTriageState={updateTriageState}
+            initialData={triageState.slideOne}
+          />
+        )}
+
+        {currentView === 'slide-two' && (
+          <SlideTwoQuery
+            setCurrentView={setCurrentView}
+            updateTriageState={updateTriageState}
+            initialData={triageState.slideTwo}
+          />
+        )}
+
+        {currentView === 'slide-three' && (
+          <SlideThreePrefs
+            setCurrentView={setCurrentView}
+            updateTriageState={updateTriageState}
+            initialData={triageState.slideThree}
+            onSubmitTriage={handleTriageSubmit}
+          />
+        )}
 
         <div className={showSidebar ? 'px-4 sm:px-6 lg:px-8 py-4' : ''}>
           {currentView === 'query' && (
