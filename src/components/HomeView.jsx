@@ -20,7 +20,7 @@ export default function HomeView({ setCurrentView }) {
 
                 <div className="mt-10 flex gap-4 flex-col sm:flex-row justify-center w-full sm:w-auto px-4 sm:px-0">
                     <button
-                        onClick={() => setCurrentView('patient-details')}
+                        onClick={() => setCurrentView('dashboard')}
                         className="group relative px-8 py-3.5 rounded-full bg-blue-600 text-white font-semibold shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center justify-center w-full sm:w-auto overflow-hidden"
                     >
                         <span className="relative z-10 flex items-center">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import HomeView from './components/HomeView';
 import PatientDetailsView from './components/PatientDetailsView';
 import BookingView from './components/BookingView';
@@ -34,7 +34,6 @@ function saveToStorage(key, data) {
 function App() {
   const [currentView, setCurrentView] = useState('home');
 
-  // Core State
   const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
   const [triageHistory, setTriageHistory] = useState(() => loadFromStorage(STORAGE_HISTORY));
   const [triageResult, setTriageResult] = useState(null);
@@ -44,11 +43,9 @@ function App() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [confirmedAppointment, setConfirmedAppointment] = useState(null);
 
-  // Booking State
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
-  // Persist to localStorage
   useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
   useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
@@ -64,15 +61,14 @@ function App() {
       const result = await analyzeSymptoms(symptoms);
       setTriageResult(result);
 
-      // Save to triage history
       setTriageHistory(prev => [{
-        symptoms: symptoms,
+        symptoms,
         department: result.department,
         urgency: result.urgency,
         summary: result.summary,
         recommendation: result.recommendation,
         timestamp: new Date().toISOString()
-      }, ...prev].slice(0, 50)); // Keep last 50
+      }, ...prev].slice(0, 50));
 
       if (result.urgency === 5) {
         setShowEmergency(true);
@@ -118,9 +114,14 @@ function App() {
     (!triageResult || s.department === triageResult.department) && s.available
   );
 
+  // Show sidebar on non-home views
+  const showSidebar = currentView !== 'home';
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-200">
-      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-blue-200">
+
+      {/* Sidebar — hidden on Home view */}
+      {showSidebar && <Sidebar currentView={currentView} setCurrentView={setCurrentView} />}
 
       {showEmergency && triageResult && (
         <EmergencyAlert
@@ -137,61 +138,63 @@ function App() {
         />
       )}
 
-      <main className="flex-1 w-full max-w-7xl mx-auto relative overflow-hidden px-4 sm:px-6 lg:px-8">
+      <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${showSidebar ? 'lg:ml-64' : ''}`}>
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
 
         {currentView === 'patient-details' && <PatientDetailsView setCurrentView={setCurrentView} />}
 
-        {currentView === 'query' && (
-          <QueryView
-            setCurrentView={setCurrentView}
-            symptoms={symptoms}
-            setSymptoms={setSymptoms}
-            isLoading={isLoading}
-            error={error}
-            triageResult={triageResult}
-            setTriageResult={setTriageResult}
-            handleTriage={handleTriage}
-          />
-        )}
+        <div className={showSidebar ? 'px-4 sm:px-6 lg:px-8 py-4' : ''}>
+          {currentView === 'query' && (
+            <QueryView
+              setCurrentView={setCurrentView}
+              symptoms={symptoms}
+              setSymptoms={setSymptoms}
+              isLoading={isLoading}
+              error={error}
+              triageResult={triageResult}
+              setTriageResult={setTriageResult}
+              handleTriage={handleTriage}
+            />
+          )}
 
-        {currentView === 'booking' && (
-          <BookingView
-            setCurrentView={setCurrentView}
-            triageResult={triageResult}
-            patientName={patientName}
-            setPatientName={setPatientName}
-            availableSlots={availableSlots}
-            selectedSlot={selectedSlot}
-            setSelectedSlot={setSelectedSlot}
-            handleBookSlot={handleBookSlot}
-          />
-        )}
+          {currentView === 'booking' && (
+            <BookingView
+              setCurrentView={setCurrentView}
+              triageResult={triageResult}
+              patientName={patientName}
+              setPatientName={setPatientName}
+              availableSlots={availableSlots}
+              selectedSlot={selectedSlot}
+              setSelectedSlot={setSelectedSlot}
+              handleBookSlot={handleBookSlot}
+            />
+          )}
 
-        {currentView === 'confirmation' && confirmedAppointment && (
-          <BookingConfirmation
-            appointment={confirmedAppointment}
-            onGoToDashboard={() => {
-              setConfirmedAppointment(null);
-              setCurrentView('dashboard');
-            }}
-          />
-        )}
+          {currentView === 'confirmation' && confirmedAppointment && (
+            <BookingConfirmation
+              appointment={confirmedAppointment}
+              onGoToDashboard={() => {
+                setConfirmedAppointment(null);
+                setCurrentView('dashboard');
+              }}
+            />
+          )}
 
-        {currentView === 'dashboard' && (
-          <DashboardView
-            setCurrentView={setCurrentView}
-            appointments={appointments}
-          />
-        )}
+          {currentView === 'dashboard' && (
+            <DashboardView
+              setCurrentView={setCurrentView}
+              appointments={appointments}
+            />
+          )}
 
-        {currentView === 'history' && (
-          <TriageHistory
-            history={triageHistory}
-            onClearHistory={handleClearHistory}
-            setCurrentView={setCurrentView}
-          />
-        )}
+          {currentView === 'history' && (
+            <TriageHistory
+              history={triageHistory}
+              onClearHistory={handleClearHistory}
+              setCurrentView={setCurrentView}
+            />
+          )}
+        </div>
       </main>
     </div>
   );
