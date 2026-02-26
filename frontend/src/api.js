@@ -17,7 +17,8 @@ export async function analyzeSymptoms(symptomText) {
             result.urgency >= 1 &&
             result.urgency <= 5 &&
             typeof result.summary === "string" &&
-            typeof result.recommendation === "string"
+            typeof result.recommendation === "string" &&
+            Array.isArray(result.tips)
         );
     }
 
@@ -28,7 +29,10 @@ Required JSON format:
   "department": "<one of: General Medicine, Cardiology, Neurology, Pediatrics, Orthopedics>",
   "urgency": <integer 1-5>,
   "summary": "<one sentence summary of the suspected issue>",
-  "recommendation": "<brief advice for the patient>"
+  "recommendation": "<brief advice for the patient>",
+  "tips": [
+    "<Provide 2-3 general wellness tips, home remedies, or encouraging motivation related to their specific symptoms>"
+  ]
 }
 
 Patient symptoms: "${symptomText}"`;
