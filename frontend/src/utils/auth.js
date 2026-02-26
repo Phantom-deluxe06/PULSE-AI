@@ -1,173 +1,199 @@
-import { supabase } from '../supabase';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
-// Authentication
+const STORAGE_USER = 'pulse_ai_user';
+const STORAGE_APPOINTMENTS = 'pulse_ai_appointments';
+const STORAGE_HISTORY = 'pulse_ai_triage_history';
+
+// ==================== AUTH ====================
+
 export async function signup(email, password, name) {
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {
-                full_name: name,
-            }
-        }
-    });
-    if (error) throw error;
-    return data.user;
+    if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signUp({
+            email, password,
+            options: { data: { full_name: name } }
+        });
+        if (error) throw error;
+        return data.user;
+    }
+    // localStorage fallback
+    const user = { id: Date.now().toString(), email, name, user_metadata: { full_name: name } };
+    localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+    return user;
 }
 
 export async function login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-    });
-    if (error) throw error;
-    return data.user;
+    if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        return data.user;
+    }
+    // localStorage fallback
+    const user = { id: 'local-user', email, name: email.split('@')[0], user_metadata: { full_name: email.split('@')[0] } };
+    localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+    return user;
 }
 
 export async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (isSupabaseConfigured) {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+    }
+    localStorage.removeItem(STORAGE_USER);
 }
 
-export async function getCurrentUser() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.user || null;
+export function getCurrentUser() {
+    if (isSupabaseConfigured) {
+        // Supabase async version — but for initial render we use sync localStorage check
+    }
+    try {
+        const saved = localStorage.getItem(STORAGE_USER);
+        return saved ? JSON.parse(saved) : null;
+    } catch {
+        return null;
+    }
 }
 
-// Patient Details
+// ==================== PATIENT DETAILS ====================
+
 export async function savePatientDetails(userId, details) {
-    const { error } = await supabase
-        .from('patient_profiles')
-        .update({
-            first_name: details.firstName,
-            last_name: details.lastName,
-            phone: details.phone,
-            age: parseInt(details.age) || null,
-            gender: details.gender,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-
-    if (error) {
-        console.error('Failed to save patient details', error);
-        throw error;
+    if (isSupabaseConfigured) {
+        const { error } = await supabase
+            .from('patient_profiles')
+            .update({
+                first_name: details.firstName,
+                last_name: details.lastName,
+                phone: details.phone,
+                age: parseInt(details.age) || null,
+                gender: details.gender,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+        if (error) throw error;
     }
 }
 
 export async function getPatientDetails(userId) {
-    const { data, error } = await supabase
-        .from('patient_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "Not Found" error
-        console.error('Failed to get patient details', error);
-        return null;
+    if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+            .from('patient_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+        if (error && error.code !== 'PGRST116') return null;
+        return data ? {
+            firstName: data.first_name || '',
+            lastName: data.last_name || '',
+            phone: data.phone || '',
+            age: data.age || '',
+            gender: data.gender || '',
+        } : null;
     }
-
-    // Maps DB fields back to frontend state
-    return data ? {
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        phone: data.phone || '',
-        age: data.age || '',
-        gender: data.gender || '',
-    } : null;
+    return null;
 }
 
-// Appointments
+// ==================== APPOINTMENTS ====================
+
 export async function saveAppointment(appointment) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
-
-    const { error } = await supabase
-        .from('appointments')
-        .insert([{
-            user_id: user.id,
-            patient_name: appointment.patientName,
-            department: appointment.department,
-            appointment_date: appointment.date,
-            appointment_time: appointment.time,
-            urgency: appointment.urgency,
-            status: appointment.status,
-            triage_summary: appointment.triageSummary,
-            recommendation: appointment.recommendation
-        }]);
-
-    if (error) throw error;
+    if (isSupabaseConfigured) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+        const { error } = await supabase
+            .from('appointments')
+            .insert([{
+                user_id: user.id,
+                patient_name: appointment.patientName,
+                department: appointment.department,
+                appointment_date: appointment.date,
+                appointment_time: appointment.time,
+                urgency: appointment.urgency,
+                status: appointment.status,
+                triage_summary: appointment.triageSummary,
+                recommendation: appointment.recommendation
+            }]);
+        if (error) throw error;
+    }
+    // localStorage handled by App.jsx
 }
 
 export async function getAppointments() {
-    const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    // Map back to frontend shape
-    return data.map(db => ({
-        id: db.id,
-        patientName: db.patient_name,
-        department: db.department,
-        date: db.appointment_date,
-        time: db.appointment_time,
-        urgency: db.urgency,
-        status: db.status,
-        triageSummary: db.triage_summary,
-        recommendation: db.recommendation,
-        createdAt: db.created_at
-    }));
+    if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+            .from('appointments')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data.map(db => ({
+            id: db.id,
+            patientName: db.patient_name,
+            department: db.department,
+            date: db.appointment_date,
+            time: db.appointment_time,
+            urgency: db.urgency,
+            status: db.status,
+            triageSummary: db.triage_summary,
+            recommendation: db.recommendation,
+            createdAt: db.created_at
+        }));
+    }
+    try {
+        const saved = localStorage.getItem(STORAGE_APPOINTMENTS);
+        return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
 }
 
-// Triage History
+// ==================== TRIAGE HISTORY ====================
+
 export async function saveTriageHistory(historyItem) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return; // Silent return if not logged in (e.g. guest symptom check)
-
-    const { error } = await supabase
-        .from('triage_history')
-        .insert([{
-            user_id: user.id,
-            symptoms: historyItem.symptoms,
-            department: historyItem.department,
-            urgency: historyItem.urgency,
-            summary: historyItem.summary,
-            recommendation: historyItem.recommendation
-        }]);
-
-    if (error) throw error;
+    if (isSupabaseConfigured) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { error } = await supabase
+            .from('triage_history')
+            .insert([{
+                user_id: user.id,
+                symptoms: historyItem.symptoms,
+                department: historyItem.department,
+                urgency: historyItem.urgency,
+                summary: historyItem.summary,
+                recommendation: historyItem.recommendation
+            }]);
+        if (error) throw error;
+    }
 }
 
 export async function getTriageHistory() {
-    const { data, error } = await supabase
-        .from('triage_history')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-    if (error) throw error;
-
-    return data.map(db => ({
-        id: db.id,
-        symptoms: db.symptoms,
-        department: db.department,
-        urgency: db.urgency,
-        summary: db.summary,
-        recommendation: db.recommendation,
-        timestamp: db.created_at
-    }));
+    if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+            .from('triage_history')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) throw error;
+        return data.map(db => ({
+            id: db.id,
+            symptoms: db.symptoms,
+            department: db.department,
+            urgency: db.urgency,
+            summary: db.summary,
+            recommendation: db.recommendation,
+            timestamp: db.created_at
+        }));
+    }
+    try {
+        const saved = localStorage.getItem(STORAGE_HISTORY);
+        return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
 }
 
 export async function clearTriageHistory() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { error } = await supabase
-        .from('triage_history')
-        .delete()
-        .eq('user_id', user.id);
-
-    if (error) throw error;
+    if (isSupabaseConfigured) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { error } = await supabase
+            .from('triage_history')
+            .delete()
+            .eq('user_id', user.id);
+        if (error) throw error;
+    }
+    localStorage.removeItem(STORAGE_HISTORY);
 }

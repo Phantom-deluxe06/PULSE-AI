@@ -8,31 +8,45 @@ import SlideTwoQuery from './components/SlideTwoQuery';
 import SlideThreePrefs from './components/SlideThreePrefs';
 import BookingView from './components/BookingView';
 import DashboardView from './components/DashboardView';
+import FindDoctorView from './components/FindDoctorView';
+import SymptomCheckerView from './components/SymptomCheckerView';
+import PharmacyView from './components/PharmacyView';
+import MedicalRecordsView from './components/MedicalRecordsView';
 import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
 import TriageHistory from './components/TriageHistory';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
-import { supabase } from './supabase';
-import {
-  login as authLogin,
-  signup as authSignup,
-  logout as authLogout,
-  getAppointments,
-  saveAppointment,
-  getTriageHistory,
-  saveTriageHistory,
-  clearTriageHistory
-} from './utils/auth';
+import { login as authLogin, signup as authSignup, logout as authLogout, getCurrentUser } from './utils/auth';
+
+const STORAGE_APPOINTMENTS = 'pulse_ai_appointments';
+const STORAGE_HISTORY = 'pulse_ai_triage_history';
+
+function loadFromStorage(key) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveToStorage(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch {
+    console.error(`Failed to save ${key} to localStorage`);
+  }
+}
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authInitialized, setAuthInitialized] = useState(false);
-  const [currentView, setCurrentView] = useState('home');
+  const [currentUser, setCurrentUser] = useState(getCurrentUser);
+  const [currentView, setCurrentView] = useState(currentUser ? 'dashboard' : 'home');
 
-  const [appointments, setAppointments] = useState([]);
-  const [triageHistory, setTriageHistory] = useState([]);
+  // Core State
+  const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
+  const [triageHistory, setTriageHistory] = useState(() => loadFromStorage(STORAGE_HISTORY));
   const [triageResult, setTriageResult] = useState(null);
   const [symptoms, setSymptoms] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +54,7 @@ function App() {
   const [showEmergency, setShowEmergency] = useState(false);
   const [confirmedAppointment, setConfirmedAppointment] = useState(null);
 
+  // Booking State
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
@@ -49,78 +64,49 @@ function App() {
     setTriageState(prev => ({ ...prev, [slide]: data }));
   };
 
-  // Initialize Auth & Data
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUser(session?.user ?? null);
-      if (session?.user) setCurrentView('dashboard');
-      setAuthInitialized(true);
-    });
+  // Find Doctor filter from Symptom Checker
+  const [filterDepartment, setFilterDepartment] = useState(null);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Fetch data when user logs in
-  useEffect(() => {
-    if (currentUser) {
-      getAppointments().then(setAppointments).catch(console.error);
-      getTriageHistory().then(setTriageHistory).catch(console.error);
-    } else {
-      setAppointments([]);
-      setTriageHistory([]);
-    }
-  }, [currentUser]);
+  // Persist to localStorage
+  useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
+  useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
   // Auth handlers
-  const handleLogin = async (email, password) => {
-    const user = await authLogin(email, password);
+  const handleLogin = (email, password) => {
+    const user = authLogin(email, password);
     setCurrentUser(user);
     setCurrentView('dashboard');
   };
 
-  const handleSignup = async (email, password, name) => {
-    const user = await authSignup(email, password, name);
+  const handleSignup = (email, password, name) => {
+    const user = authSignup(email, password, name);
     setCurrentUser(user);
     setCurrentView('patient-details');
   };
 
-  const handleLogout = async () => {
-    await authLogout();
+  const handleLogout = () => {
+    authLogout();
     setCurrentUser(null);
     setCurrentView('home');
   };
 
-  // Triage logic
-  const handleTriage = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!symptoms.trim()) return;
-
+  const executeTriage = async (symptomsToAnalyze) => {
     setIsLoading(true);
     setError(null);
     setTriageResult(null);
 
     try {
-      const result = await analyzeSymptoms(symptoms);
+      const result = await analyzeSymptoms(symptomsToAnalyze);
       setTriageResult(result);
 
-      const historyItem = {
-        symptoms,
+      setTriageHistory(prev => [{
+        symptoms: symptomsToAnalyze,
         department: result.department,
         urgency: result.urgency,
         summary: result.summary,
         recommendation: result.recommendation,
-      };
-
-      if (currentUser) {
-        await saveTriageHistory(historyItem);
-        // Refresh local history
-        const updatedHistory = await getTriageHistory();
-        setTriageHistory(updatedHistory);
-      }
+        timestamp: new Date().toISOString()
+      }, ...prev].slice(0, 50));
 
       if (result.urgency === 5) {
         setShowEmergency(true);
@@ -132,11 +118,17 @@ function App() {
     }
   };
 
-  // Booking logic
-  const handleBookSlot = async () => {
+  const handleTriage = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!symptoms.trim()) return;
+    executeTriage(symptoms);
+  };
+
+  const handleBookSlot = () => {
     if (!selectedSlot || !patientName.trim()) return;
 
     const newAppointment = {
+      id: Date.now().toString(),
       patientName,
       department: triageResult?.department || 'General Medicine',
       date: new Date().toLocaleDateString(),
@@ -145,35 +137,21 @@ function App() {
       status: "Confirmed",
       triageSummary: triageResult?.summary || '',
       recommendation: triageResult?.recommendation || '',
+      createdAt: new Date().toISOString()
     };
 
-    try {
-      if (currentUser) {
-        await saveAppointment(newAppointment);
-        const updatedAppts = await getAppointments();
-        setAppointments(updatedAppts);
-      }
-
-      setConfirmedAppointment({
-        ...newAppointment,
-        id: Date.now().toString() // For UI rendering
-      });
-      setCurrentView('confirmation');
-      setTriageResult(null);
-      setSymptoms('');
-      setSelectedSlot(null);
-      setPatientName('');
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save appointment. Please try again.");
-    }
+    setAppointments(prev => [...prev, newAppointment]);
+    setConfirmedAppointment(newAppointment);
+    setCurrentView('confirmation');
+    setTriageResult(null);
+    setSymptoms('');
+    setSelectedSlot(null);
+    setPatientName('');
   };
 
-  const handleClearHistory = async () => {
-    if (currentUser) {
-      await clearTriageHistory();
-      setTriageHistory([]);
-    }
+  const handleClearHistory = () => {
+    setTriageHistory([]);
+    localStorage.removeItem(STORAGE_HISTORY);
   };
 
   const availableSlots = TIME_SLOTS.filter(s =>
@@ -184,11 +162,7 @@ function App() {
   const publicViews = ['home', 'login', 'signup'];
   const isPublicView = publicViews.includes(currentView);
 
-  if (!authInitialized) {
-    return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading...</div>;
-  }
-
-  // Auto-redirect if trying to access private view logged out
+  // If not logged in and trying to access private views, redirect
   if (!currentUser && !isPublicView) {
     setCurrentView('home');
     return null;
@@ -197,14 +171,12 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-blue-200">
 
+      {/* Sidebar — only on authenticated views */}
       {!isPublicView && currentUser && (
         <Sidebar
           currentView={currentView}
           setCurrentView={setCurrentView}
-          currentUser={{
-            name: currentUser.user_metadata?.full_name || currentUser.email,
-            email: currentUser.email
-          }}
+          currentUser={currentUser}
           onLogout={handleLogout}
         />
       )}
@@ -225,7 +197,7 @@ function App() {
       )}
 
       <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${!isPublicView ? 'lg:ml-64' : ''}`}>
-
+        {/* Public Views */}
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
         {currentView === 'login' && (
           <LoginView
@@ -242,6 +214,7 @@ function App() {
           />
         )}
 
+        {/* Authenticated Views */}
         <div className={!isPublicView ? 'px-4 sm:px-6 lg:px-8 py-4' : ''}>
           {currentView === 'patient-details' && (
             <PatientDetailsView
@@ -310,7 +283,31 @@ function App() {
             <DashboardView
               setCurrentView={setCurrentView}
               appointments={appointments}
+              triageHistory={triageHistory}
             />
+          )}
+
+          {currentView === 'find-doctor' && (
+            <FindDoctorView
+              setCurrentView={setCurrentView}
+              filterDepartment={filterDepartment}
+            />
+          )}
+
+          {currentView === 'symptom-checker' && (
+            <SymptomCheckerView
+              setCurrentView={setCurrentView}
+              analyzeSymptomsFn={analyzeSymptoms}
+              setFilterDepartment={setFilterDepartment}
+            />
+          )}
+
+          {currentView === 'pharmacy' && (
+            <PharmacyView />
+          )}
+
+          {currentView === 'records' && (
+            <MedicalRecordsView triageHistory={triageHistory} />
           )}
 
           {currentView === 'history' && (

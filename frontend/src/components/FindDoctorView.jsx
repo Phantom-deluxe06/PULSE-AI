@@ -1,0 +1,136 @@
+import { useState } from 'react';
+import { Search, MapPin, Star, Clock, Video, Building2, Calendar, ChevronDown, X, CheckCircle2 } from 'lucide-react';
+
+const DOCTORS = [
+    { id: 1, name: 'Dr. Priya Sharma', specialty: 'Cardiologist', hospital: 'City Hospital', rating: 4.9, reviews: 142, available: 'Today, 4:00 PM', fee: '₹800', type: 'both', img: '👩‍⚕️' },
+    { id: 2, name: 'Dr. Arjun Mehta', specialty: 'Orthopedic Surgeon', hospital: "St. Joseph's Clinic", rating: 4.7, reviews: 98, available: 'Tomorrow, 10:00 AM', fee: '₹1,200', type: 'in-person', img: '👨‍⚕️' },
+    { id: 3, name: 'Dr. Fatima Khan', specialty: 'Pediatrician', hospital: 'Apollo Hospital', rating: 4.8, reviews: 215, available: 'Today, 6:30 PM', fee: '₹600', type: 'both', img: '👩‍⚕️' },
+    { id: 4, name: 'Dr. Rajesh Iyer', specialty: 'Neurologist', hospital: 'City Hospital', rating: 4.6, reviews: 76, available: 'Wed, 11:00 AM', fee: '₹1,500', type: 'video', img: '👨‍⚕️' },
+    { id: 5, name: 'Dr. Sneha Reddy', specialty: 'Dermatologist', hospital: 'MedPlus Clinic', rating: 4.9, reviews: 189, available: 'Today, 2:00 PM', fee: '₹700', type: 'both', img: '👩‍⚕️' },
+    { id: 6, name: 'Dr. Vikram Singh', specialty: 'ENT Specialist', hospital: "St. Joseph's Clinic", rating: 4.5, reviews: 62, available: 'Thu, 9:00 AM', fee: '₹900', type: 'in-person', img: '👨‍⚕️' },
+    { id: 7, name: 'Dr. Ananya Gupta', specialty: 'General Physician', hospital: 'Apollo Hospital', rating: 4.8, reviews: 310, available: 'Today, 5:00 PM', fee: '₹500', type: 'both', img: '👩‍⚕️' },
+    { id: 8, name: 'Dr. Karthik Nair', specialty: 'Nephrologist', hospital: 'City Hospital', rating: 4.7, reviews: 88, available: 'Tomorrow, 3:00 PM', fee: '₹1,100', type: 'video', img: '👨‍⚕️' },
+];
+
+const HOSPITALS = ['All Hospitals', 'City Hospital', "St. Joseph's Clinic", 'Apollo Hospital', 'MedPlus Clinic'];
+const DEPARTMENTS = ['All Departments', 'Cardiologist', 'Orthopedic Surgeon', 'Pediatrician', 'Neurologist', 'Dermatologist', 'ENT Specialist', 'General Physician', 'Nephrologist'];
+const CONSULT_TYPES = ['All Types', 'In-Person', 'Video'];
+
+const TIME_SLOTS = ['9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM'];
+
+export default function FindDoctorView({ setCurrentView, filterDepartment }) {
+    const [search, setSearch] = useState('');
+    const [hospital, setHospital] = useState('All Hospitals');
+    const [department, setDepartment] = useState(filterDepartment || 'All Departments');
+    const [consultType, setConsultType] = useState('All Types');
+    const [selectedDoctor, setSelectedDoctor] = useState(null);
+    const [selectedSlot, setSelectedSlot] = useState(null);
+    const [booked, setBooked] = useState(false);
+
+    const filtered = DOCTORS.filter(d => {
+        const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.specialty.toLowerCase().includes(search.toLowerCase());
+        const matchHospital = hospital === 'All Hospitals' || d.hospital === hospital;
+        const matchDept = department === 'All Departments' || d.specialty === department;
+        const matchType = consultType === 'All Types' || (consultType === 'Video' ? d.type === 'video' || d.type === 'both' : d.type === 'in-person' || d.type === 'both');
+        return matchSearch && matchHospital && matchDept && matchType;
+    });
+
+    const handleBook = () => {
+        setBooked(true);
+        setTimeout(() => { setBooked(false); setSelectedDoctor(null); setSelectedSlot(null); }, 2500);
+    };
+
+    return (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto py-8 px-4">
+            <div className="mb-6">
+                <h2 className="text-3xl font-bold text-slate-900">Find a Doctor</h2>
+                <p className="text-slate-500 mt-1">Search, filter, and book appointments with specialists.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6 shadow-sm mb-6">
+                <div className="relative mb-4">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by doctor name or specialty..." className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    {[
+                        { label: 'Hospital', value: hospital, options: HOSPITALS, setter: setHospital },
+                        { label: 'Department', value: department, options: DEPARTMENTS, setter: setDepartment },
+                        { label: 'Type', value: consultType, options: CONSULT_TYPES, setter: setConsultType },
+                    ].map((filter) => (
+                        <div key={filter.label} className="relative">
+                            <select value={filter.value} onChange={(e) => filter.setter(e.target.value)} className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                {filter.options.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <p className="text-sm font-semibold text-slate-400 mb-4">{filtered.length} doctor{filtered.length !== 1 ? 's' : ''} found</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filtered.map((doc) => (
+                    <div key={doc.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all hover:shadow-md cursor-pointer ${selectedDoctor?.id === doc.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-100'}`} onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setBooked(false); }}>
+                        <div className="p-5 flex gap-4">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl shrink-0">{doc.img}</div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-base font-bold text-slate-900 truncate">{doc.name}</h4>
+                                <p className="text-sm text-blue-600 font-semibold">{doc.specialty}</p>
+                                <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
+                                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {doc.hospital}</span>
+                                    <span className="flex items-center gap-1"><Star className="w-3 h-3 text-amber-500" /> {doc.rating} ({doc.reviews})</span>
+                                </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                                <p className="text-lg font-black text-slate-900">{doc.fee}</p>
+                                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full mt-1 ${doc.available.includes('Today') ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <Clock className="w-3 h-3" /> {doc.available.includes('Today') ? 'Available Today' : doc.available.split(',')[0]}
+                                </span>
+                            </div>
+                        </div>
+
+                        {selectedDoctor?.id === doc.id && (
+                            <div className="border-t border-slate-100 p-5 bg-slate-50 animate-in fade-in duration-300" onClick={(e) => e.stopPropagation()}>
+                                {booked ? (
+                                    <div className="text-center py-6">
+                                        <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2 animate-in zoom-in" />
+                                        <p className="text-lg font-bold text-slate-900">Appointment Booked!</p>
+                                        <p className="text-sm text-slate-500">with {doc.name}</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-sm font-bold text-slate-900">Select a time slot</p>
+                                            <button onClick={() => setSelectedDoctor(null)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+                                        </div>
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+                                            {TIME_SLOTS.map((slot, i) => {
+                                                const isBooked = i === 2 || i === 5;
+                                                return (
+                                                    <button key={slot} disabled={isBooked} onClick={() => setSelectedSlot(slot)} className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${isBooked ? 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed line-through' : selectedSlot === slot ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'}`}>
+                                                        {slot}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex gap-2 items-center text-xs text-slate-400">
+                                                <span className="w-3 h-3 bg-slate-100 rounded border border-slate-200 inline-block" /> Booked
+                                                <span className="w-3 h-3 bg-blue-600 rounded inline-block ml-2" /> Selected
+                                            </div>
+                                            <button onClick={handleBook} disabled={!selectedSlot} className={`ml-auto px-6 py-2 rounded-xl text-sm font-bold transition-all ${selectedSlot ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
+                                                Book Now
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
