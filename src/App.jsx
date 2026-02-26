@@ -1,38 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HomeView from './components/HomeView';
 import BookingView from './components/BookingView';
 import DashboardView from './components/DashboardView';
 import QueryView from './components/QueryView';
+import EmergencyAlert from './components/EmergencyAlert';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
 
+const STORAGE_KEY = 'pulse_ai_appointments';
+
+function loadAppointments() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveAppointments(appointments) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
+  } catch {
+    console.error('Failed to save appointments to localStorage');
+  }
+}
+
 function App() {
-  // Person B: View State
-  const [currentView, setCurrentView] = useState('home'); // home, query, booking, dashboard
+  // View State
+  const [currentView, setCurrentView] = useState('home');
 
   // Person A: Core Logic State
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState(loadAppointments);
   const [triageResult, setTriageResult] = useState(null);
   const [symptoms, setSymptoms] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showEmergency, setShowEmergency] = useState(false);
 
-  // Person A: Booking Logic State
+  // Booking State
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
-  // Person A: Handlers
+  // Persist appointments to localStorage whenever they change
+  useEffect(() => {
+    saveAppointments(appointments);
+  }, [appointments]);
+
   const handleTriage = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!symptoms.trim()) return;
 
     setIsLoading(true);
     setError(null);
+    setTriageResult(null);
 
     try {
       const result = await analyzeSymptoms(symptoms);
       setTriageResult(result);
+      // Show Emergency Alert only for Level 5 urgency
+      if (result.urgency === 5) {
+        setShowEmergency(true);
+      }
     } catch (err) {
       setError(err.message || "An error occurred during triage. Please try again.");
     } finally {
@@ -46,27 +76,24 @@ function App() {
     const newAppointment = {
       id: Date.now().toString(),
       patientName,
-      department: triageResult.department,
-      date: new Date().toLocaleDateString(), // Mocking today
+      department: triageResult?.department || 'General Medicine',
+      date: new Date().toLocaleDateString(),
       time: selectedSlot.time,
-      urgency: triageResult.urgency,
+      urgency: triageResult?.urgency || 1,
       status: "Confirmed",
-      triageSummary: triageResult.summary,
-      recommendation: triageResult.recommendation,
+      triageSummary: triageResult?.summary || '',
+      recommendation: triageResult?.recommendation || '',
       createdAt: new Date().toISOString()
     };
 
     setAppointments(prev => [...prev, newAppointment]);
     setCurrentView('dashboard');
-
-    // Reset state
     setTriageResult(null);
     setSymptoms('');
     setSelectedSlot(null);
     setPatientName('');
   };
 
-  // Filter slots for current department
   const availableSlots = TIME_SLOTS.filter(s =>
     (!triageResult || s.department === triageResult.department) && s.available
   );
@@ -75,8 +102,23 @@ function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-200">
       <Navbar currentView={currentView} setCurrentView={setCurrentView} />
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto relative overflow-hidden px-4 sm:px-6 lg:px-8 py-8">
+      {/* Emergency Level 5 Modal */}
+      {showEmergency && triageResult && (
+        <EmergencyAlert
+          triageResult={triageResult}
+          onProceedToBooking={() => {
+            setShowEmergency(false);
+            setCurrentView('booking');
+          }}
+          onDismiss={() => {
+            setShowEmergency(false);
+            setTriageResult(null);
+            setSymptoms('');
+          }}
+        />
+      )}
+
+      <main className="flex-1 w-full max-w-7xl mx-auto relative overflow-hidden px-4 sm:px-6 lg:px-8">
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
 
         {currentView === 'query' && (

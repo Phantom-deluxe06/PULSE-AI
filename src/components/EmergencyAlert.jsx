@@ -1,0 +1,68 @@
+import { Phone, AlertTriangle, ShieldAlert } from 'lucide-react';
+
+export default function EmergencyAlert({ triageResult, onProceedToBooking, onDismiss }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-red-950/90 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="max-w-lg w-full mx-4 bg-white rounded-3xl overflow-hidden shadow-2xl">
+
+                {/* Red Banner */}
+                <div className="bg-red-600 px-8 py-6 text-white text-center">
+                    <div className="flex justify-center mb-3">
+                        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+                            <ShieldAlert className="w-9 h-9 text-white" />
+                        </div>
+                    </div>
+                    <h2 className="text-3xl font-black tracking-tight">Emergency Alert</h2>
+                    <p className="text-red-100 mt-1 text-sm font-medium">Urgency Level 5 — Critical Condition Detected</p>
+                </div>
+
+                {/* Body */}
+                <div className="px-8 py-6 text-center">
+                    <p className="text-slate-700 text-base font-medium mb-2">
+                        Based on your symptoms, our AI has detected a <strong className="text-red-600">potentially life-threatening condition</strong>.
+                    </p>
+                    <p className="text-slate-600 text-sm mb-1">
+                        <span className="font-semibold">AI Assessment:</span> {triageResult?.summary}
+                    </p>
+                    <p className="text-slate-400 text-xs mt-2">
+                        This is not a substitute for professional medical advice. If you are in immediate danger, call emergency services right away.
+                    </p>
+                </div>
+
+                {/* Emergency Call Button */}
+                <div className="px-8 pb-4">
+                    <a
+                        href="tel:108"
+                        className="w-full flex items-center justify-center gap-3 bg-red-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-500/40"
+                    >
+                        <Phone className="w-6 h-6" /> Call Emergency (108)
+                    </a>
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 px-8">
+                    <div className="flex-1 h-px bg-slate-100" />
+                    <span className="text-xs text-slate-400 font-medium">or</span>
+                    <div className="flex-1 h-px bg-slate-100" />
+                </div>
+
+                {/* Soft Actions */}
+                <div className="px-8 py-4 flex gap-3">
+                    <button
+                        onClick={onDismiss}
+                        className="flex-1 py-3 rounded-xl font-semibold text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 transition"
+                    >
+                        Re-assess
+                    </button>
+                    <button
+                        onClick={onProceedToBooking}
+                        className="flex-1 py-3 rounded-xl font-semibold text-sm bg-slate-800 text-white hover:bg-slate-900 transition flex items-center justify-center gap-2"
+                    >
+                        <AlertTriangle className="w-4 h-4" /> Book Urgent Slot
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    );
+}
