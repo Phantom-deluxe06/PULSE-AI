@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar as CalendarIcon, Clock, ArrowRight, ArrowLeft, Video, Building2, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ArrowRight, ArrowLeft, Video, Building2, CheckCircle2, HeartPulse } from 'lucide-react';
 
 export default function SlideThreePrefs({ setCurrentView, updateTriageState, initialData, onSubmitTriage }) {
     const [formData, setFormData] = useState({
@@ -97,8 +97,8 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
                                 type="button"
                                 onClick={() => handleVisitMode('in-person')}
                                 className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-bold border-2 transition-all ${formData.visitMode === 'in-person'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
+                                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
                                     }`}
                             >
                                 <Building2 className={`w-5 h-5 ${formData.visitMode === 'in-person' ? 'text-blue-600' : 'text-slate-400'}`} />
@@ -108,8 +108,8 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
                                 type="button"
                                 onClick={() => handleVisitMode('video')}
                                 className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-bold border-2 transition-all ${formData.visitMode === 'video'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
+                                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
                                     }`}
                             >
                                 <Video className={`w-5 h-5 ${formData.visitMode === 'video' ? 'text-blue-600' : 'text-slate-400'}`} />
@@ -126,8 +126,8 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
                                 type="button"
                                 onClick={() => handlePrevHistory(true)}
                                 className={`flex-1 py-3 px-4 rounded-xl font-semibold border transition-all ${formData.visitedDeptBefore === true
-                                        ? 'border-blue-600 bg-blue-600 text-white shadow-md'
-                                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                    ? 'border-blue-600 bg-blue-600 text-white shadow-md'
+                                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                                     }`}
                             >
                                 Yes
@@ -136,8 +136,8 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
                                 type="button"
                                 onClick={() => handlePrevHistory(false)}
                                 className={`flex-1 py-3 px-4 rounded-xl font-semibold border transition-all ${formData.visitedDeptBefore === false
-                                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
-                                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
+                                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                                     }`}
                             >
                                 No, this is my first time
@@ -192,8 +192,8 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
                                 type="submit"
                                 disabled={!isFormValid}
                                 className={`w-full sm:w-auto group relative px-8 py-3.5 rounded-xl font-bold flex items-center justify-center transition-all ${isFormValid
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
-                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
+                                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                     }`}
                             >
                                 <span className="relative z-10 flex items-center">
