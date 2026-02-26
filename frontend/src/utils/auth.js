@@ -1,77 +1,173 @@
-const AUTH_KEY = 'pulse_ai_auth';
-const USERS_KEY = 'pulse_ai_users';
-const PATIENT_KEY = 'pulse_ai_patient_details';
+import { supabase } from '../supabase';
 
-export function getUsers() {
-    try {
-        return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-    } catch {
-        return [];
-    }
-}
-
-export function signup(email, password, name) {
-    const users = getUsers();
-    if (users.find(u => u.email === email)) {
-        throw new Error('An account with this email already exists.');
-    }
-    const user = {
-        id: Date.now().toString(),
+// Authentication
+export async function signup(email, password, name) {
+    const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        name,
-        createdAt: new Date().toISOString()
-    };
-    users.push(user);
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    localStorage.setItem(AUTH_KEY, JSON.stringify({ id: user.id, email: user.email, name: user.name }));
-    return { id: user.id, email: user.email, name: user.name };
+        options: {
+            data: {
+                full_name: name,
+            }
+        }
+    });
+    if (error) throw error;
+    return data.user;
 }
 
-export function login(email, password) {
-    const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    if (!user) {
-        throw new Error('Invalid email or password.');
+export async function login(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+    if (error) throw error;
+    return data.user;
+}
+
+export async function logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+}
+
+export async function getCurrentUser() {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user || null;
+}
+
+// Patient Details
+export async function savePatientDetails(userId, details) {
+    const { error } = await supabase
+        .from('patient_profiles')
+        .update({
+            first_name: details.firstName,
+            last_name: details.lastName,
+            phone: details.phone,
+            age: parseInt(details.age) || null,
+            gender: details.gender,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+    if (error) {
+        console.error('Failed to save patient details', error);
+        throw error;
     }
-    const session = { id: user.id, email: user.email, name: user.name };
-    localStorage.setItem(AUTH_KEY, JSON.stringify(session));
-    return session;
 }
 
-export function logout() {
-    localStorage.removeItem(AUTH_KEY);
-}
+export async function getPatientDetails(userId) {
+    const { data, error } = await supabase
+        .from('patient_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-export function getCurrentUser() {
-    try {
-        const auth = localStorage.getItem(AUTH_KEY);
-        return auth ? JSON.parse(auth) : null;
-    } catch {
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "Not Found" error
+        console.error('Failed to get patient details', error);
         return null;
     }
+
+    // Maps DB fields back to frontend state
+    return data ? {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        phone: data.phone || '',
+        age: data.age || '',
+        gender: data.gender || '',
+    } : null;
 }
 
-export function isAuthenticated() {
-    return getCurrentUser() !== null;
+// Appointments
+export async function saveAppointment(appointment) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase
+        .from('appointments')
+        .insert([{
+            user_id: user.id,
+            patient_name: appointment.patientName,
+            department: appointment.department,
+            appointment_date: appointment.date,
+            appointment_time: appointment.time,
+            urgency: appointment.urgency,
+            status: appointment.status,
+            triage_summary: appointment.triageSummary,
+            recommendation: appointment.recommendation
+        }]);
+
+    if (error) throw error;
 }
 
-// Patient details persistence
-export function savePatientDetails(userId, details) {
-    try {
-        const all = JSON.parse(localStorage.getItem(PATIENT_KEY)) || {};
-        all[userId] = { ...details, updatedAt: new Date().toISOString() };
-        localStorage.setItem(PATIENT_KEY, JSON.stringify(all));
-    } catch {
-        console.error('Failed to save patient details');
-    }
+export async function getAppointments() {
+    const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Map back to frontend shape
+    return data.map(db => ({
+        id: db.id,
+        patientName: db.patient_name,
+        department: db.department,
+        date: db.appointment_date,
+        time: db.appointment_time,
+        urgency: db.urgency,
+        status: db.status,
+        triageSummary: db.triage_summary,
+        recommendation: db.recommendation,
+        createdAt: db.created_at
+    }));
 }
 
-export function getPatientDetails(userId) {
-    try {
-        const all = JSON.parse(localStorage.getItem(PATIENT_KEY)) || {};
-        return all[userId] || null;
-    } catch {
-        return null;
-    }
+// Triage History
+export async function saveTriageHistory(historyItem) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return; // Silent return if not logged in (e.g. guest symptom check)
+
+    const { error } = await supabase
+        .from('triage_history')
+        .insert([{
+            user_id: user.id,
+            symptoms: historyItem.symptoms,
+            department: historyItem.department,
+            urgency: historyItem.urgency,
+            summary: historyItem.summary,
+            recommendation: historyItem.recommendation
+        }]);
+
+    if (error) throw error;
+}
+
+export async function getTriageHistory() {
+    const { data, error } = await supabase
+        .from('triage_history')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+    if (error) throw error;
+
+    return data.map(db => ({
+        id: db.id,
+        symptoms: db.symptoms,
+        department: db.department,
+        urgency: db.urgency,
+        summary: db.summary,
+        recommendation: db.recommendation,
+        timestamp: db.created_at
+    }));
+}
+
+export async function clearTriageHistory() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+        .from('triage_history')
+        .delete()
+        .eq('user_id', user.id);
+
+    if (error) throw error;
 }
