@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { CheckCircle2, Calendar, Clock, Building2, User } from 'lucide-react';
+import { CheckCircle2, Calendar, Clock, Building2, User, Download } from 'lucide-react';
+import { generateReceiptPDF } from '../utils/receipt';
 
 export default function BookingConfirmation({ appointment, onGoToDashboard }) {
 
@@ -80,12 +81,20 @@ export default function BookingConfirmation({ appointment, onGoToDashboard }) {
             {/* Auto-redirect notice */}
             <p className="text-sm text-slate-400 mt-6 animate-pulse">Redirecting to Dashboard in a few seconds...</p>
 
-            <button
-                onClick={onGoToDashboard}
-                className="mt-4 text-blue-600 font-semibold text-sm hover:underline"
-            >
-                Go to Dashboard now →
-            </button>
+            <div className="mt-6 flex items-center gap-4">
+                <button
+                    onClick={() => generateReceiptPDF(appointment)}
+                    className="px-5 py-2.5 bg-slate-800 text-white rounded-xl font-semibold text-sm hover:bg-slate-900 transition flex items-center gap-2"
+                >
+                    <Download className="w-4 h-4" /> Download Receipt
+                </button>
+                <button
+                    onClick={onGoToDashboard}
+                    className="text-blue-600 font-semibold text-sm hover:underline"
+                >
+                    Go to Dashboard now →
+                </button>
+            </div>
         </div>
     );
 }

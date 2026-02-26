@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Loader2, Mic, MicOff, AlertTriangle, Sparkles } from 'lucide-react';
+import TriageSkeleton from './TriageSkeleton';
 
 const QUICK_SYMPTOMS = [
     "Chest pain and shortness of breath",
@@ -75,6 +76,9 @@ export default function QueryView({
 
     const urgencyInfo = triageResult ? getUrgencyLabel(triageResult.urgency) : null;
 
+    // Show full-screen skeleton while AI is analyzing
+    if (isLoading) return <TriageSkeleton />;
+
     return (
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 pt-6 pb-12">
 
@@ -117,8 +121,8 @@ export default function QueryView({
                             onClick={toggleVoice}
                             title={recognitionRef.current ? "Click to speak" : "Voice not supported in this browser"}
                             className={`absolute bottom-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${isListening
-                                    ? 'bg-red-500 text-white animate-pulse'
-                                    : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
+                                ? 'bg-red-500 text-white animate-pulse'
+                                : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
                                 }`}
                         >
                             {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

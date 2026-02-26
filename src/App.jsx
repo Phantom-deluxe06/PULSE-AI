@@ -7,34 +7,36 @@ import DashboardView from './components/DashboardView';
 import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
+import TriageHistory from './components/TriageHistory';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
 
-const STORAGE_KEY = 'pulse_ai_appointments';
+const STORAGE_APPOINTMENTS = 'pulse_ai_appointments';
+const STORAGE_HISTORY = 'pulse_ai_triage_history';
 
-function loadAppointments() {
+function loadFromStorage(key) {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : [];
   } catch {
     return [];
   }
 }
 
-function saveAppointments(appointments) {
+function saveToStorage(key, data) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
+    localStorage.setItem(key, JSON.stringify(data));
   } catch {
-    console.error('Failed to save appointments to localStorage');
+    console.error(`Failed to save ${key} to localStorage`);
   }
 }
 
 function App() {
-  // View State
   const [currentView, setCurrentView] = useState('home');
 
-  // Person A: Core Logic State
-  const [appointments, setAppointments] = useState(loadAppointments);
+  // Core State
+  const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
+  const [triageHistory, setTriageHistory] = useState(() => loadFromStorage(STORAGE_HISTORY));
   const [triageResult, setTriageResult] = useState(null);
   const [symptoms, setSymptoms] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,10 +48,9 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
-  // Persist appointments to localStorage whenever they change
-  useEffect(() => {
-    saveAppointments(appointments);
-  }, [appointments]);
+  // Persist to localStorage
+  useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
+  useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
   const handleTriage = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -62,7 +63,17 @@ function App() {
     try {
       const result = await analyzeSymptoms(symptoms);
       setTriageResult(result);
-      // Show Emergency Alert only for Level 5 urgency
+
+      // Save to triage history
+      setTriageHistory(prev => [{
+        symptoms: symptoms,
+        department: result.department,
+        urgency: result.urgency,
+        summary: result.summary,
+        recommendation: result.recommendation,
+        timestamp: new Date().toISOString()
+      }, ...prev].slice(0, 50)); // Keep last 50
+
       if (result.urgency === 5) {
         setShowEmergency(true);
       }
@@ -98,6 +109,11 @@ function App() {
     setPatientName('');
   };
 
+  const handleClearHistory = () => {
+    setTriageHistory([]);
+    localStorage.removeItem(STORAGE_HISTORY);
+  };
+
   const availableSlots = TIME_SLOTS.filter(s =>
     (!triageResult || s.department === triageResult.department) && s.available
   );
@@ -106,7 +122,6 @@ function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-200">
       <Navbar currentView={currentView} setCurrentView={setCurrentView} />
 
-      {/* Emergency Level 5 Modal */}
       {showEmergency && triageResult && (
         <EmergencyAlert
           triageResult={triageResult}
@@ -167,6 +182,14 @@ function App() {
           <DashboardView
             setCurrentView={setCurrentView}
             appointments={appointments}
+          />
+        )}
+
+        {currentView === 'history' && (
+          <TriageHistory
+            history={triageHistory}
+            onClearHistory={handleClearHistory}
+            setCurrentView={setCurrentView}
           />
         )}
       </main>

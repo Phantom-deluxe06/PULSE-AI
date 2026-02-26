@@ -28,6 +28,12 @@ export default function Navbar({ currentView, setCurrentView }) {
                     >
                         Dashboard
                     </button>
+                    <button
+                        onClick={() => setCurrentView('history')}
+                        className={`text-sm font-semibold transition-colors duration-200 ${currentView === 'history' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900'}`}
+                    >
+                        History
+                    </button>
                 </nav>
             </div>
         </header>
