@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User, Phone, CalendarHeart, ArrowRight, Activity, Info, ShieldCheck } from 'lucide-react';
 
-export default function PatientDetailsView({ setCurrentView }) {
+export default function PatientDetailsView({ setCurrentView, updateTriageState, initialData }) {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -9,7 +9,8 @@ export default function PatientDetailsView({ setCurrentView }) {
         age: '',
         gender: '',
         returningPatient: null, // null, 'yes', 'no'
-        patientId: ''
+        patientId: '',
+        ...initialData
     });
 
     const [errors, setErrors] = useState({});
@@ -65,7 +66,8 @@ export default function PatientDetailsView({ setCurrentView }) {
             return;
         }
 
-        setCurrentView('query');
+        updateTriageState('slideOne', formData);
+        setCurrentView('slide-two');
     };
 
     const isFormValid =
