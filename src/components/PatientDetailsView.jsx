@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Phone, CalendarHeart, ArrowRight, Activity, Info, ShieldCheck } from 'lucide-react';
+import { savePatientDetails, getPatientDetails, getCurrentUser } from '../utils/auth';
 
 export default function PatientDetailsView({ setCurrentView, updateTriageState, initialData }) {
     const [formData, setFormData] = useState({
@@ -14,6 +15,17 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
     });
 
     const [errors, setErrors] = useState({});
+
+    // Load saved patient details on mount
+    useEffect(() => {
+        const user = getCurrentUser();
+        if (user) {
+            const saved = getPatientDetails(user.id);
+            if (saved) {
+                setFormData(prev => ({ ...prev, ...saved, returningPatient: 'yes' }));
+            }
+        }
+    }, []);
 
     const formatPhoneNumber = (value) => {
         // Strip all non-digits
@@ -66,6 +78,11 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
             return;
         }
 
+        // Save patient details for next time
+        const user = getCurrentUser();
+        if (user) {
+            savePatientDetails(user.id, formData);
+        }
         updateTriageState('slideOne', formData);
         setCurrentView('slide-two');
     };

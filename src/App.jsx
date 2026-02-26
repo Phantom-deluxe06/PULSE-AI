@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import HomeView from './components/HomeView';
+import LoginView from './components/LoginView';
+import SignupView from './components/SignupView';
 import PatientDetailsView from './components/PatientDetailsView';
 import SlideTwoQuery from './components/SlideTwoQuery';
 import SlideThreePrefs from './components/SlideThreePrefs';
@@ -12,6 +14,7 @@ import BookingConfirmation from './components/BookingConfirmation';
 import TriageHistory from './components/TriageHistory';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
+import { login as authLogin, signup as authSignup, logout as authLogout, getCurrentUser } from './utils/auth';
 
 const STORAGE_APPOINTMENTS = 'pulse_ai_appointments';
 const STORAGE_HISTORY = 'pulse_ai_triage_history';
@@ -34,8 +37,8 @@ function saveToStorage(key, data) {
 }
 
 function App() {
-  // Views: home, patient-details, slide-two, slide-three, query, booking, dashboard, confirmation, history
-  const [currentView, setCurrentView] = useState('home');
+  const [currentUser, setCurrentUser] = useState(getCurrentUser);
+  const [currentView, setCurrentView] = useState(currentUser ? 'dashboard' : 'home');
 
   const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
   const [triageHistory, setTriageHistory] = useState(() => loadFromStorage(STORAGE_HISTORY));
@@ -49,33 +52,48 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [patientName, setPatientName] = useState('');
 
-  // Multi-step Triage Form State
-  const [triageState, setTriageState] = useState({
-    slideOne: {},
-    slideTwo: {},
-    slideThree: {}
-  });
+  // Multi-slide triage state (Person B's 3-step flow)
+  const [triageState, setTriageState] = useState({});
+  const updateTriageState = (slide, data) => {
+    setTriageState(prev => ({ ...prev, [slide]: data }));
+  };
+
   useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
   useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
-  const updateTriageState = (slideName, data) => {
-    setTriageState(prev => ({
-      ...prev,
-      [slideName]: data
-    }));
+  // Auth handlers
+  const handleLogin = (email, password) => {
+    const user = authLogin(email, password);
+    setCurrentUser(user);
+    setCurrentView('dashboard');
   };
 
-  const executeTriage = async (symptomsToAnalyze) => {
+  const handleSignup = (email, password, name) => {
+    const user = authSignup(email, password, name);
+    setCurrentUser(user);
+    setCurrentView('patient-details');
+  };
+
+  const handleLogout = () => {
+    authLogout();
+    setCurrentUser(null);
+    setCurrentView('home');
+  };
+
+  const handleTriage = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!symptoms.trim()) return;
+
     setIsLoading(true);
     setError(null);
     setTriageResult(null);
 
     try {
-      const result = await analyzeSymptoms(symptomsToAnalyze);
+      const result = await analyzeSymptoms(symptoms);
       setTriageResult(result);
 
       setTriageHistory(prev => [{
-        symptoms: symptomsToAnalyze,
+        symptoms,
         department: result.department,
         urgency: result.urgency,
         summary: result.summary,
@@ -91,32 +109,6 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleTriageSubmit = (finalSlideData) => {
-    const fullData = {
-      ...triageState.slideOne,
-      ...triageState.slideTwo,
-      ...finalSlideData
-    };
-
-    console.log("Submitting to AI Triage Engine:", fullData);
-
-    // Compile symptoms into a paragraph for the AI
-    const compiledSymptoms = `Patient Issue: ${fullData.symptoms}\nSeverity: ${fullData.severity}/10\nQuery Type: ${fullData.queryType}\nRequested Department: ${fullData.department}`;
-    setSymptoms(compiledSymptoms);
-
-    // Proceed to loading state on the query view
-    setCurrentView('query');
-
-    // Fire off triage automatically after compiling
-    executeTriage(compiledSymptoms);
-  };
-
-  const handleTriage = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (!symptoms.trim()) return;
-    executeTriage(symptoms);
   };
 
   const handleBookSlot = () => {
@@ -153,14 +145,28 @@ function App() {
     (!triageResult || s.department === triageResult.department) && s.available
   );
 
-  // Show sidebar on non-home views
-  const showSidebar = currentView !== 'home';
+  // Public pages (no sidebar)
+  const publicViews = ['home', 'login', 'signup'];
+  const isPublicView = publicViews.includes(currentView);
+
+  // If not logged in and trying to access private views, redirect
+  if (!currentUser && !isPublicView) {
+    setCurrentView('home');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-blue-200">
 
-      {/* Sidebar — hidden on Home view */}
-      {showSidebar && <Sidebar currentView={currentView} setCurrentView={setCurrentView} />}
+      {/* Sidebar — only on authenticated views */}
+      {!isPublicView && currentUser && (
+        <Sidebar
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+        />
+      )}
 
       {showEmergency && triageResult && (
         <EmergencyAlert
@@ -177,35 +183,53 @@ function App() {
         />
       )}
 
-      <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${showSidebar ? 'lg:ml-64' : ''}`}>
+      <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${!isPublicView ? 'lg:ml-64' : ''}`}>
+        {/* Public Views */}
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
-
-        {currentView === 'patient-details' && (
-          <PatientDetailsView
-            setCurrentView={setCurrentView}
-            updateTriageState={updateTriageState}
-            initialData={triageState.slideOne}
+        {currentView === 'login' && (
+          <LoginView
+            onLogin={handleLogin}
+            onGoToSignup={() => setCurrentView('signup')}
+            onGoHome={() => setCurrentView('home')}
+          />
+        )}
+        {currentView === 'signup' && (
+          <SignupView
+            onSignup={handleSignup}
+            onGoToLogin={() => setCurrentView('login')}
+            onGoHome={() => setCurrentView('home')}
           />
         )}
 
-        {currentView === 'slide-two' && (
-          <SlideTwoQuery
-            setCurrentView={setCurrentView}
-            updateTriageState={updateTriageState}
-            initialData={triageState.slideTwo}
-          />
-        )}
+        {/* Authenticated Views */}
+        <div className={!isPublicView ? 'px-4 sm:px-6 lg:px-8 py-4' : ''}>
+          {currentView === 'patient-details' && (
+            <PatientDetailsView
+              setCurrentView={setCurrentView}
+              updateTriageState={updateTriageState}
+              initialData={triageState.slideOne}
+            />
+          )}
 
-        {currentView === 'slide-three' && (
-          <SlideThreePrefs
-            setCurrentView={setCurrentView}
-            updateTriageState={updateTriageState}
-            initialData={triageState.slideThree}
-            onSubmitTriage={handleTriageSubmit}
-          />
-        )}
+          {currentView === 'slide-two' && (
+            <SlideTwoQuery
+              setCurrentView={setCurrentView}
+              updateTriageState={updateTriageState}
+              initialData={triageState.slideTwo}
+            />
+          )}
 
-        <div className={showSidebar ? 'px-4 sm:px-6 lg:px-8 py-4' : ''}>
+          {currentView === 'slide-three' && (
+            <SlideThreePrefs
+              setCurrentView={setCurrentView}
+              updateTriageState={updateTriageState}
+              initialData={triageState.slideThree}
+              triageState={triageState}
+              setSymptoms={setSymptoms}
+              handleTriage={handleTriage}
+            />
+          )}
+
           {currentView === 'query' && (
             <QueryView
               setCurrentView={setCurrentView}

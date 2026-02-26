@@ -1,13 +1,14 @@
-import { LayoutDashboard, Stethoscope, Clock, CalendarCheck, X, Menu } from 'lucide-react';
+import { LayoutDashboard, Stethoscope, Clock, CalendarCheck, X, Menu, LogOut, UserCircle, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'patient-details', label: 'Start Triage', icon: ClipboardList },
     { id: 'query', label: 'Symptoms Check', icon: Stethoscope },
     { id: 'history', label: 'Triage History', icon: Clock },
 ];
 
-export default function Sidebar({ currentView, setCurrentView }) {
+export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -33,10 +34,7 @@ export default function Sidebar({ currentView, setCurrentView }) {
 
                 {/* Logo */}
                 <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">
-                    <div
-                        className="flex items-center gap-2 cursor-pointer"
-                        onClick={() => { setCurrentView('home'); setIsOpen(false); }}
-                    >
+                    <div className="flex items-center gap-2">
                         <div className="bg-blue-600 p-1.5 rounded-lg">
                             <CalendarCheck className="w-5 h-5 text-white" />
                         </div>
@@ -51,6 +49,21 @@ export default function Sidebar({ currentView, setCurrentView }) {
                         <X className="w-4 h-4" />
                     </button>
                 </div>
+
+                {/* User Card */}
+                {currentUser && (
+                    <div className="px-4 py-4 border-b border-slate-100">
+                        <div className="flex items-center gap-3 px-2">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <UserCircle className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-slate-900 truncate">{currentUser.name}</p>
+                                <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
@@ -74,9 +87,20 @@ export default function Sidebar({ currentView, setCurrentView }) {
                     })}
                 </nav>
 
+                {/* Logout */}
+                <div className="px-3 pb-4">
+                    <button
+                        onClick={() => { onLogout(); setIsOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
+                    </button>
+                </div>
+
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100">
-                    <p className="text-xs text-slate-400 text-center">PULSE AI v1.1</p>
+                <div className="px-6 py-3 border-t border-slate-100">
+                    <p className="text-xs text-slate-400 text-center">PULSE AI v1.2</p>
                 </div>
             </aside>
         </>
