@@ -50,7 +50,7 @@ function App() {
     setError(null)
 
     try {
-      const result = await analyzeSymptoms(symptomText)
+      const result = await analyzeSymptoms(symptoms)
       setTriageResult(result)
     } catch (err) {
       setError(err.message || "An error occurred during triage. Please try again.")
@@ -233,8 +233,8 @@ function App() {
                       key={slot.id}
                       onClick={() => setSelectedSlot(slot)}
                       className={`p-3 rounded-xl border text-sm font-medium transition flex items-center justify-center gap-2 ${selectedSlot?.id === slot.id
-                          ? 'bg-primary border-primary text-white'
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-primary'
+                        ? 'bg-primary border-primary text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-primary'
                         }`}
                     >
                       <Calendar className="w-4 h-4" /> {slot.time}
