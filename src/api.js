@@ -39,8 +39,7 @@ Patient symptoms: "${symptomText}"`;
         generationConfig: {
             temperature: 0.2,
             topP: 0.8,
-            maxOutputTokens: 300,
-            responseMimeType: "application/json"
+            maxOutputTokens: 300
         }
     };
 
