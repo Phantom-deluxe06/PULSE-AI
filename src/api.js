@@ -5,16 +5,13 @@ export async function analyzeSymptoms(symptomText) {
         throw new Error("API key is missing. Please set VITE_GEMINI_API_KEY in your .env file.");
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+    // Using gemini-1.5-flash — stable, widely available
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+    const validDepts = ["General Medicine", "Cardiology", "Neurology", "Pediatrics", "Orthopedics"];
 
     function validateTriageResult(result) {
-        const validDepts = [
-            "General Medicine", "Cardiology", "Neurology",
-            "Pediatrics", "Orthopedics"
-        ];
-
         if (!result || typeof result !== 'object') return false;
-
         return (
             validDepts.includes(result.department) &&
             Number.isInteger(result.urgency) &&
@@ -25,79 +22,79 @@ export async function analyzeSymptoms(symptomText) {
         );
     }
 
-    async function callWithRetry(fn, maxRetries = 5) {
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                return await fn();
-            } catch (error) {
-                if (i === maxRetries - 1) throw error;
-                const delay = Math.pow(2, i) * 1000;
-                console.warn(`API call failed. Retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
-                await new Promise(r => setTimeout(r, delay));
-            }
-        }
-    }
+    const prompt = `You are a medical triage AI assistant. Analyze the patient symptoms and respond ONLY with a valid JSON object — no markdown, no explanation, no extra text.
 
-    const prompt = `
-You are a medical triage AI. Analyze the following patient symptoms and respond in strict JSON format.
-
-JSON Schema:
+Required JSON format:
 {
-  "department": "string" // Must be EXACTLY one of: "General Medicine", "Cardiology", "Neurology", "Pediatrics", "Orthopedics"
-  "urgency": number // Integer from 1 (Routine) to 5 (Emergency)
-  "summary": "string" // A 1-sentence summary of the suspected issue
-  "recommendation": "string" // Brief advice, e.g., "See a doctor within 24 hours"
+  "department": "<one of: General Medicine, Cardiology, Neurology, Pediatrics, Orthopedics>",
+  "urgency": <integer 1-5>,
+  "summary": "<one sentence summary of the suspected issue>",
+  "recommendation": "<brief advice for the patient>"
 }
 
-Patient Symptoms:
-"${symptomText}"
-
-DO NOT wrap the response in markdown code blocks. DO NOT output any text other than the JSON object.
-`;
+Patient symptoms: "${symptomText}"`;
 
     const requestBody = {
-        contents: [{
-            parts: [{
-                text: prompt
-            }]
-        }],
+        contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 0.3,
+            temperature: 0.2,
             topP: 0.8,
-            maxOutputTokens: 256
+            maxOutputTokens: 300,
+            responseMimeType: "application/json"
         }
     };
 
-    const apiCall = async () => {
+    const makeRequest = async () => {
         const response = await fetch(API_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(`API error ${response.status}: ${errData?.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
-        const responseText = data.candidates[0].content.parts[0].text;
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
+        // Strip any accidental markdown fences
+        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+        let parsed;
         try {
-            const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsed = JSON.parse(cleanedText);
-
-            if (!validateTriageResult(parsed)) {
-                throw new Error("Invalid response format from AI");
-            }
-
-            return parsed;
-        } catch (e) {
-            console.error("Failed to parse or validate AI response:", responseText);
-            throw new Error("Failed to process AI response");
+            parsed = JSON.parse(cleaned);
+        } catch {
+            console.error("Raw AI response:", rawText);
+            throw new Error("AI returned an unexpected format. Please try again.");
         }
+
+        // Fix department if AI returned something close but not exact
+        if (!validDepts.includes(parsed.department)) {
+            const match = validDepts.find(d => d.toLowerCase().includes((parsed.department || '').toLowerCase().split(' ')[0]));
+            if (match) parsed.department = match;
+            else parsed.department = "General Medicine";
+        }
+
+        // Clamp urgency just in case
+        parsed.urgency = Math.min(5, Math.max(1, Math.round(Number(parsed.urgency) || 1)));
+
+        if (!validateTriageResult(parsed)) {
+            console.error("Validation failed on:", parsed);
+            throw new Error("AI returned an unexpected format. Please try again.");
+        }
+
+        return parsed;
     };
 
-    return await callWithRetry(apiCall, 5);
+    // Retry up to 3 times on failure
+    for (let i = 0; i < 3; i++) {
+        try {
+            return await makeRequest();
+        } catch (err) {
+            if (i === 2) throw err;
+            await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+        }
+    }
 }
