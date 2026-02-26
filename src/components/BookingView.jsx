@@ -1,4 +1,5 @@
-import { Calendar, Clock, ChevronRight, CheckCircle2, User, Building2 } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, Clock, ChevronRight, User, Building2 } from 'lucide-react';
 
 export default function BookingView({
     setCurrentView,
@@ -10,13 +11,58 @@ export default function BookingView({
     setSelectedSlot,
     handleBookSlot
 }) {
-    // If we haven't triaged yet but ended up here, provide defaults
+    const [bookingError, setBookingError] = useState(null);
+
     const recommendedDept = triageResult ? triageResult.department : "General Medicine";
     const urgencyLevel = triageResult ? triageResult.urgency : 1;
 
-    // Use availableSlots grouped by Date (Mocking dates based on slots)
-    // In our mock TIME_SLOTS, they are all just "times", so we will just show "Today"
-    const dates = ['Today'];
+    // Person B's dynamic date generation
+    const generateDates = () => {
+        const list = [];
+        const today = new Date();
+        for (let i = 0; i < 5; i++) {
+            const nextDate = new Date(today);
+            nextDate.setDate(today.getDate() + i);
+
+            let label = '';
+            if (i === 0) label = 'Today';
+            else if (i === 1) label = 'Tomorrow';
+            else {
+                label = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            list.push({ label, dateObj: nextDate });
+        }
+        return list;
+    };
+
+    const dates = generateDates();
+    const [selectedDate, setSelectedDate] = useState(dates[0]);
+
+    const handleConfirm = () => {
+        if (!selectedSlot || !patientName.trim()) return;
+
+        // Person B's time validation for "Today"
+        if (selectedDate?.label === 'Today') {
+            const [timePart, modifier] = selectedSlot.time.split(' ');
+            let [hours, minutes] = timePart.split(':');
+            hours = parseInt(hours, 10);
+
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+
+            const selectedDateTime = new Date();
+            selectedDateTime.setHours(hours, parseInt(minutes, 10), 0, 0);
+
+            if (selectedDateTime <= new Date()) {
+                setBookingError("Please select a valid future time for today's date.");
+                return;
+            }
+        }
+
+        setBookingError(null);
+        handleBookSlot();
+    };
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto py-8 px-4">
@@ -34,7 +80,7 @@ export default function BookingView({
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Recommended</span>
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${urgencyLevel >= 4 ? 'bg-red-100 text-red-700' :
-                                    urgencyLevel === 3 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                                urgencyLevel === 3 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                                 }`}>
                                 Priority {urgencyLevel}
                             </span>
@@ -70,53 +116,66 @@ export default function BookingView({
                     <Calendar className="w-5 h-5 text-slate-500" /> Select Date
                 </h4>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-                    {dates.map((date) => (
+                    {dates.map((dateItem) => (
                         <button
-                            key={date}
-                            className={'shrink-0 px-5 py-3 rounded-xl font-medium text-sm transition-all border bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'}
+                            key={dateItem.label}
+                            onClick={() => {
+                                setSelectedDate(dateItem);
+                                setBookingError(null);
+                            }}
+                            className={`shrink-0 px-5 py-3 rounded-xl font-medium text-sm transition-all border ${selectedDate?.label === dateItem.label
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                }`}
                         >
-                            {date}
+                            {dateItem.label}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* Time Selection */}
-            <div className="mb-10 animate-in fade-in duration-300">
-                <h4 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-slate-500" /> Select Time
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {availableSlots.length > 0 ? availableSlots.map((slot) => (
-                        <button
-                            key={slot.id}
-                            onClick={() => setSelectedSlot(slot)}
-                            className={`px-4 py-3 rounded-xl font-medium text-sm transition-all border ${selectedSlot?.id === slot.id
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
-                                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
-                                }`}
-                        >
-                            {slot.time}
-                        </button>
-                    )) : (
-                        <div className="col-span-full text-center p-6 bg-slate-50 rounded-xl text-slate-500">
-                            No available slots for this department today.
-                        </div>
-                    )}
+            {selectedDate && (
+                <div className="mb-10 animate-in fade-in duration-300">
+                    <h4 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-slate-500" /> Select Time
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {availableSlots.length > 0 ? availableSlots.map((slot) => (
+                            <button
+                                key={slot.id}
+                                onClick={() => {
+                                    setSelectedSlot(slot);
+                                    setBookingError(null);
+                                }}
+                                className={`px-4 py-3 rounded-xl font-medium text-sm transition-all border ${selectedSlot?.id === slot.id
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                    }`}
+                            >
+                                {slot.time}
+                            </button>
+                        )) : (
+                            <div className="col-span-full text-center p-6 bg-slate-50 rounded-xl text-slate-500">
+                                No available slots for this department today.
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Action Footer */}
             <div className="border-t border-slate-200 pt-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="text-sm text-slate-600 text-center sm:text-left">
                     {selectedSlot ? (
-                        <p>Selected: <strong className="text-slate-900">Today</strong> at <strong className="text-slate-900">{selectedSlot.time}</strong></p>
+                        <p>Selected: <strong className="text-slate-900">{selectedDate?.label || 'Today'}</strong> at <strong className="text-slate-900">{selectedSlot.time}</strong></p>
                     ) : (
                         <p>Please select a time to continue.</p>
                     )}
+                    {bookingError && <p className="text-red-500 text-sm mt-1 font-medium bg-red-50 p-2 rounded-lg">{bookingError}</p>}
                 </div>
                 <button
-                    onClick={handleBookSlot}
+                    onClick={handleConfirm}
                     disabled={!selectedSlot || !patientName.trim()}
                     className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center transition-all ${selectedSlot && patientName.trim()
                         ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95'

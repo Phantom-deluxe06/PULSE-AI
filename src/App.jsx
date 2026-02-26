@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HomeView from './components/HomeView';
+import PatientDetailsView from './components/PatientDetailsView';
 import BookingView from './components/BookingView';
 import DashboardView from './components/DashboardView';
 import QueryView from './components/QueryView';
@@ -123,6 +124,8 @@ function App() {
 
       <main className="flex-1 w-full max-w-7xl mx-auto relative overflow-hidden px-4 sm:px-6 lg:px-8">
         {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
+
+        {currentView === 'patient-details' && <PatientDetailsView setCurrentView={setCurrentView} />}
 
         {currentView === 'query' && (
           <QueryView
