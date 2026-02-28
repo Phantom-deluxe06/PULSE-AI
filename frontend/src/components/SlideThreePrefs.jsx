@@ -60,7 +60,7 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div>
                         <h2 className="text-3xl font-extrabold tracking-tight mb-2">Preferences</h2>
-                        <p className="text-blue-100 font-medium">How and when would you like your consultation?</p>
+                        <p className="text-white/80 font-medium">How and when would you like your consultation?</p>
                     </div>
                     <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center shrink-0">
                         <Clock className="w-8 h-8 text-white" />

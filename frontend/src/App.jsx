@@ -311,7 +311,7 @@ function App() {
         />
       )}
 
-      <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all pb-24 lg:pb-0 ${!isPublicView ? 'lg:ml-64' : ''}`}>
+      <main className={`flex-1 flex flex-col min-h-screen overflow-y-auto transition-all pb-24 lg:pb-0 ${!isPublicView ? 'lg:ml-64' : ''}`}>
         {/* Public Views */}
         {currentView === 'home' && <HomeView setCurrentView={navigate} />}
         {currentView === 'login' && (

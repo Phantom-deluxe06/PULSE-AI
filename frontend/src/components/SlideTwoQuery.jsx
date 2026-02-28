@@ -72,7 +72,7 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div>
                         <h2 className="text-3xl font-extrabold tracking-tight mb-2">Query Details</h2>
-                        <p className="text-blue-100 font-medium">Tell us what you're experiencing.</p>
+                        <p className="text-white/80 font-medium">Tell us what you're experiencing.</p>
                     </div>
                     <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center shrink-0">
                         <HeartPulse className="w-8 h-8 text-white" />
@@ -165,8 +165,8 @@ export default function SlideTwoQuery({ setCurrentView, updateTriageState, initi
                                 onClick={toggleVoice}
                                 title="Click to speak your symptoms"
                                 className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all ${isListening
-                                        ? 'bg-red-500 text-white animate-pulse'
-                                        : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
+                                    ? 'bg-red-500 text-white animate-pulse'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
                                     }`}
                             >
                                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

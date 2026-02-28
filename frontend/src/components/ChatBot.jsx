@@ -79,10 +79,10 @@ export default function ChatBot() {
                             <Bot className="w-8 h-8 bg-white/10 p-1.5 rounded-xl shadow-inner border border-white/20" />
                             <div>
                                 <h3 className="text-sm font-bold tracking-tight">Pulse AI Assistant</h3>
-                                <p className="text-[10px] text-blue-100 font-medium tracking-wide uppercase mt-0.5">Virtual Healthcare Support</p>
+                                <p className="text-[10px] text-white/70 font-medium tracking-wide uppercase mt-0.5">Virtual Healthcare Support</p>
                             </div>
                         </div>
-                        <button onClick={() => setIsOpen(false)} className="text-blue-100 hover:text-white transition-colors hover:bg-white/10 p-1.5 rounded-lg active:scale-95">
+                        <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors hover:bg-white/10 p-1.5 rounded-lg active:scale-95">
                             <X className="w-5 h-5" />
                         </button>
                     </div>

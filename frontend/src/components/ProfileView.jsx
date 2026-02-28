@@ -49,7 +49,7 @@ export default function ProfileView({ currentUser, setCurrentUser, setCurrentVie
                         </div>
                         <div>
                             <h2 className="text-2xl font-extrabold">{form.name || 'Your Profile'}</h2>
-                            <p className="text-blue-100 text-sm mt-1">{form.email}</p>
+                            <p className="text-white/80 text-sm mt-1">{form.email}</p>
                         </div>
                     </div>
                 </div>

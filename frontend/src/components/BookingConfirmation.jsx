@@ -37,7 +37,7 @@ export default function BookingConfirmation({ appointment, onGoToDashboard }) {
             {/* Appointment Summary Card */}
             <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="bg-blue-600 px-6 py-4">
-                    <p className="text-xs text-blue-200 font-semibold uppercase tracking-widest">Appointment Details</p>
+                    <p className="text-xs text-white/80 font-semibold uppercase tracking-widest">Appointment Details</p>
                 </div>
 
                 <div className="p-6 flex flex-col gap-4">

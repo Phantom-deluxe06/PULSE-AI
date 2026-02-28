@@ -105,7 +105,7 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
                 <div className="bg-primary p-8 text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div>
                         <h2 className="text-3xl font-extrabold tracking-tight mb-2">Patient Details</h2>
-                        <p className="text-blue-100 font-medium">Let's get to know you before we assess your symptoms.</p>
+                        <p className="text-white/80 font-medium">Let's get to know you before we assess your symptoms.</p>
                     </div>
                     <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center shrink-0">
                         <ShieldCheck className="w-8 h-8 text-white" />

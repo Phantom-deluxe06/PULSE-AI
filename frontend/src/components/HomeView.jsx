@@ -121,7 +121,7 @@ export default function HomeView({ setCurrentView }) {
                 {/* Hero content */}
                 <div className={`relative text-center max-w-5xl mx-auto transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
 
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary-light text-sm font-medium mb-8 backdrop-blur-sm">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 text-cyan-200 text-sm font-medium mb-8 backdrop-blur-sm">
                         <Activity className="w-4 h-4 animate-pulse text-primary" />
                         Powered by Gemini 2.5 Flash · AI-First Healthcare
                     </div>
@@ -241,7 +241,7 @@ export default function HomeView({ setCurrentView }) {
                                         <div className={`flex gap-6 sm:gap-10 items-center ${isEven ? 'sm:flex-row' : 'sm:flex-row-reverse'}`}>
                                             {/* Content */}
                                             <div className={`flex-1 ${isEven ? 'sm:text-right' : 'sm:text-left'}`}>
-                                                <span className="text-5xl font-black text-slate-100 block leading-none mb-1">{step.step}</span>
+                                                <span className="text-5xl font-black text-slate-200 block leading-none mb-1">{step.step}</span>
                                                 <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
                                                 <p className="text-slate-500 leading-relaxed">{step.desc}</p>
                                             </div>
@@ -279,7 +279,7 @@ export default function HomeView({ setCurrentView }) {
                                             <Icon className="w-6 h-6 text-white" />
                                         </div>
                                         <p className="font-bold text-lg">{t.label}</p>
-                                        <p className="text-blue-100 text-sm">{t.sub}</p>
+                                        <p className="text-white/70 text-sm">{t.sub}</p>
                                     </div>
                                 </Reveal>
                             );

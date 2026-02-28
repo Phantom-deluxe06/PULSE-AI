@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, Activity, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Activity, Eye, EyeOff, CheckCircle, X } from 'lucide-react';
 
 export default function SignupView({ onSignup, onGoToLogin, onGoHome }) {
     const [name, setName] = useState('');
@@ -9,6 +9,7 @@ export default function SignupView({ onSignup, onGoToLogin, onGoHome }) {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showVerifyPopup, setShowVerifyPopup] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,6 +27,7 @@ export default function SignupView({ onSignup, onGoToLogin, onGoHome }) {
         setIsLoading(true);
         try {
             await onSignup(email, password, name);
+            setShowVerifyPopup(true);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -35,6 +37,49 @@ export default function SignupView({ onSignup, onGoToLogin, onGoHome }) {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-4">
+
+            {/* Email Verification Popup */}
+            {showVerifyPopup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center animate-in fade-in zoom-in-95 duration-300 relative">
+                        <button
+                            onClick={() => setShowVerifyPopup(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                            <Mail className="w-8 h-8 text-blue-600" />
+                        </div>
+
+                        <h3 className="text-xl font-extrabold text-slate-900 mb-2">Verify Your Email</h3>
+                        <p className="text-sm text-slate-500 leading-relaxed mb-1">
+                            We've sent a verification link to
+                        </p>
+                        <p className="text-sm font-bold text-blue-600 mb-4">{email}</p>
+                        <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                            Please check your inbox (and spam folder) and click the link to activate your account.
+                        </p>
+
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => { setShowVerifyPopup(false); onGoToLogin(); }}
+                                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-[0.98]"
+                            >
+                                <CheckCircle className="w-4 h-4" /> Go to Login
+                            </button>
+                            <button
+                                onClick={() => setShowVerifyPopup(false)}
+                                className="text-sm text-slate-500 hover:text-slate-700 font-semibold transition-colors"
+                            >
+                                I'll verify later
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="w-full max-w-md">
 
                 {/* Logo */}
