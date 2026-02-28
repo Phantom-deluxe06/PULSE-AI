@@ -18,6 +18,7 @@ import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
 import AdminDashboardView from './components/AdminDashboardView';
+import TriageHistory from './components/TriageHistory';
 import ToastContainer from './components/Toast';
 import ChatBot from './components/ChatBot';
 import { analyzeSymptoms } from './api';

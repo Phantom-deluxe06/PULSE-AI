@@ -123,7 +123,7 @@ export default function HomeView({ setCurrentView }) {
 
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 text-cyan-200 text-sm font-medium mb-8 backdrop-blur-sm">
                         <Activity className="w-4 h-4 animate-pulse text-primary" />
-                        Powered by Gemini 2.5 Flash · AI-First Healthcare
+                        AI-Powered Triage · Smart Healthcare
                     </div>
 
                     <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-[1.05] mb-6">
