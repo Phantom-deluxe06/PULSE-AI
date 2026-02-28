@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Activity, Pill, HeartPulse, Clock, TrendingUp, ArrowRight, Bell } from 'lucide-react';
+import { Calendar, Activity, Clock, TrendingUp, HeartPulse, Bell, Pill } from 'lucide-react';
 
 export default function DashboardView({ appointments, setCurrentView, triageHistory }) {
     const getUrgencyColor = (level) => {
@@ -51,37 +51,7 @@ export default function DashboardView({ appointments, setCurrentView, triageHist
                 })}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button onClick={() => setCurrentView('patient-details')} className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors text-left group">
-                            <HeartPulse className="w-5 h-5 text-blue-600" />
-                            <div>
-                                <p className="text-sm font-bold text-slate-900">Start Triage</p>
-                                <p className="text-xs text-slate-500">AI symptom check</p>
-                            </div>
-                            <ArrowRight className="w-4 h-4 text-slate-400 ml-auto group-hover:translate-x-1 transition-transform" />
-                        </button>
-                        <button onClick={() => setCurrentView('find-doctor')} className="flex items-center gap-3 p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition-colors text-left group">
-                            <Calendar className="w-5 h-5 text-indigo-600" />
-                            <div>
-                                <p className="text-sm font-bold text-slate-900">Find Doctor</p>
-                                <p className="text-xs text-slate-500">Book appointment</p>
-                            </div>
-                            <ArrowRight className="w-4 h-4 text-slate-400 ml-auto group-hover:translate-x-1 transition-transform" />
-                        </button>
-                        <button onClick={() => setCurrentView('pharmacy')} className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors text-left group">
-                            <Pill className="w-5 h-5 text-amber-600" />
-                            <div>
-                                <p className="text-sm font-bold text-slate-900">Refill Rx</p>
-                                <p className="text-xs text-slate-500">Upload prescription</p>
-                            </div>
-                            <ArrowRight className="w-4 h-4 text-slate-400 ml-auto group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    </div>
-                </div>
-
+            <div className="mb-8">
                 <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-sm">
                     <h3 className="text-lg font-bold mb-3">💡 Health Tip</h3>
                     <p className="text-emerald-50 text-sm leading-relaxed">{healthTips[new Date().getDate() % healthTips.length]}</p>
@@ -105,16 +75,23 @@ export default function DashboardView({ appointments, setCurrentView, triageHist
                     ) : (
                         <div className="space-y-3">
                             {appointments.slice(0, 3).map((apt) => (
-                                <div key={apt.id} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                    <div className="text-center min-w-[50px]">
+                                <div key={apt.id} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                    <div className="text-center min-w-[50px] pt-0.5">
                                         <p className="text-xs font-bold text-slate-400">{apt.date === new Date().toLocaleDateString() ? 'Today' : apt.date}</p>
                                         <p className="text-lg font-black text-slate-900">{apt.time?.split(' ')[0]}</p>
+                                        <p className="text-[10px] text-slate-400">{apt.time?.split(' ')[1]}</p>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-slate-900 truncate">{apt.department}</p>
-                                        <p className="text-xs text-slate-500 truncate">{apt.patientName}</p>
+                                        <p className="text-sm font-bold text-slate-900 truncate">{apt.doctorName || apt.department}</p>
+                                        <p className="text-xs text-slate-500 truncate">{apt.department}{apt.hospital ? ` · ${apt.hospital}` : ''}</p>
+                                        {apt.triageSummary && <p className="text-xs text-slate-400 mt-1 truncate">{apt.triageSummary}</p>}
+                                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-100">{apt.status || 'Confirmed'}</span>
+                                            {apt.fee && <span className="text-[10px] text-slate-400 font-medium">{apt.fee}</span>}
+                                            {apt.patientName && <span className="text-[10px] text-slate-400">· {apt.patientName}</span>}
+                                        </div>
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getUrgencyColor(apt.urgency)}`}>P{apt.urgency}</span>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${getUrgencyColor(apt.urgency)}`}>P{apt.urgency}</span>
                                 </div>
                             ))}
                         </div>

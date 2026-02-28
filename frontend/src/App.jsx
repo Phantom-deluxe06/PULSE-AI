@@ -12,6 +12,7 @@ import FindDoctorView from './components/FindDoctorView';
 import SymptomCheckerView from './components/SymptomCheckerView';
 import PharmacyView from './components/PharmacyView';
 import MedicalRecordsView from './components/MedicalRecordsView';
+import ProfileView from './components/ProfileView';
 import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
@@ -72,20 +73,20 @@ function App() {
   useEffect(() => { saveToStorage(STORAGE_HISTORY, triageHistory); }, [triageHistory]);
 
   // Auth handlers
-  const handleLogin = (email, password) => {
-    const user = authLogin(email, password);
+  const handleLogin = async (email, password) => {
+    const user = await authLogin(email, password);
     setCurrentUser(user);
     setCurrentView('dashboard');
   };
 
-  const handleSignup = (email, password, name) => {
-    const user = authSignup(email, password, name);
+  const handleSignup = async (email, password, name) => {
+    const user = await authSignup(email, password, name);
     setCurrentUser(user);
     setCurrentView('patient-details');
   };
 
-  const handleLogout = () => {
-    authLogout();
+  const handleLogout = async () => {
+    await authLogout();
     setCurrentUser(null);
     setCurrentView('home');
   };
@@ -124,14 +125,18 @@ function App() {
     executeTriage(symptoms);
   };
 
-  const handleBookSlot = () => {
+  const handleBookSlot = (selectedDate) => {
     if (!selectedSlot || !patientName.trim()) return;
+
+    const appointmentDate = selectedDate?.dateObj
+      ? selectedDate.dateObj.toLocaleDateString()
+      : new Date().toLocaleDateString();
 
     const newAppointment = {
       id: Date.now().toString(),
       patientName,
       department: triageResult?.department || 'General Medicine',
-      date: new Date().toLocaleDateString(),
+      date: appointmentDate,
       time: selectedSlot.time,
       urgency: triageResult?.urgency || 1,
       status: "Confirmed",
@@ -147,6 +152,23 @@ function App() {
     setSymptoms('');
     setSelectedSlot(null);
     setPatientName('');
+  };
+
+  const handleDoctorBook = (details) => {
+    const newAppointment = {
+      id: Date.now().toString(),
+      patientName: currentUser?.name || 'Patient',
+      doctorName: details.doctorName,
+      department: details.department,
+      hospital: details.hospital,
+      date: details.date,
+      time: details.time,
+      fee: details.fee,
+      urgency: 1,
+      status: 'Confirmed',
+      createdAt: new Date().toISOString(),
+    };
+    setAppointments(prev => [...prev, newAppointment]);
   };
 
   const handleClearHistory = () => {
@@ -291,6 +313,7 @@ function App() {
             <FindDoctorView
               setCurrentView={setCurrentView}
               filterDepartment={filterDepartment}
+              onBookAppointment={handleDoctorBook}
             />
           )}
 
@@ -308,6 +331,14 @@ function App() {
 
           {currentView === 'records' && (
             <MedicalRecordsView triageHistory={triageHistory} />
+          )}
+
+          {currentView === 'profile' && (
+            <ProfileView
+              currentUser={currentUser}
+              setCurrentUser={setCurrentUser}
+              setCurrentView={setCurrentView}
+            />
           )}
 
           {currentView === 'history' && (

@@ -10,7 +10,7 @@ export default function SignupView({ onSignup, onGoToLogin, onGoHome }) {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
@@ -25,7 +25,7 @@ export default function SignupView({ onSignup, onGoToLogin, onGoHome }) {
 
         setIsLoading(true);
         try {
-            onSignup(email, password, name);
+            await onSignup(email, password, name);
         } catch (err) {
             setError(err.message);
         } finally {

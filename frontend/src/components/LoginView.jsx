@@ -13,7 +13,7 @@ export default function LoginView({ onLogin, onGoToSignup, onGoHome }) {
         setError('');
         setIsLoading(true);
         try {
-            onLogin(email, password);
+            await onLogin(email, password);
         } catch (err) {
             setError(err.message);
         } finally {

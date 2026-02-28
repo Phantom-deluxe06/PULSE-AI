@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Calendar as CalendarIcon, Clock, ArrowRight, ArrowLeft, Video, Building2, CheckCircle2, HeartPulse } from 'lucide-react';
 
-export default function SlideThreePrefs({ setCurrentView, updateTriageState, initialData, onSubmitTriage }) {
+export default function SlideThreePrefs({ setCurrentView, updateTriageState, initialData, triageState, setSymptoms, handleTriage }) {
     const [formData, setFormData] = useState({
         preferredDate: '',
         preferredTime: '',
@@ -30,8 +30,24 @@ export default function SlideThreePrefs({ setCurrentView, updateTriageState, ini
     const handleNext = (e) => {
         e.preventDefault();
         updateTriageState('slideThree', formData);
-        // Submit the fully compiled state to be processed by Gemini API
-        onSubmitTriage(formData);
+
+        // Compile all triage slides into a symptoms description for the AI
+        const slideOne = triageState?.slideOne || {};
+        const slideTwo = triageState?.slideTwo || {};
+        const compiledSymptoms = [
+            slideTwo?.primarySymptom && `Primary symptom: ${slideTwo.primarySymptom}`,
+            slideTwo?.symptomDuration && `Duration: ${slideTwo.symptomDuration}`,
+            slideTwo?.painLevel && `Pain level: ${slideTwo.painLevel}/10`,
+            slideTwo?.additionalNotes && `Notes: ${slideTwo.additionalNotes}`,
+            slideOne?.age && `Age: ${slideOne.age}`,
+            slideOne?.gender && `Gender: ${slideOne.gender}`,
+        ].filter(Boolean).join('. ');
+
+        setSymptoms(compiledSymptoms || 'General checkup');
+        setTimeout(() => {
+            handleTriage();
+            setCurrentView('query');
+        }, 0);
     };
 
     const isFormValid = formData.preferredDate && formData.preferredTime && formData.consent;

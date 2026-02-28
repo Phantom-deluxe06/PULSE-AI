@@ -16,6 +16,17 @@ export default function BookingView({
     const recommendedDept = triageResult ? triageResult.department : "General Medicine";
     const urgencyLevel = triageResult ? triageResult.urgency : 1;
 
+    const isSlotPast = (timeStr, dateLabel) => {
+        if (dateLabel !== 'Today') return false;
+        const [timePart, modifier] = timeStr.split(' ');
+        let [hours, minutes] = timePart.split(':').map(Number);
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+        const slotTime = new Date();
+        slotTime.setHours(hours, minutes, 0, 0);
+        return slotTime <= new Date();
+    };
+
     // Person B's dynamic date generation
     const generateDates = () => {
         const list = [];
@@ -61,7 +72,7 @@ export default function BookingView({
         }
 
         setBookingError(null);
-        handleBookSlot();
+        handleBookSlot(selectedDate);
     };
 
     return (
@@ -141,21 +152,27 @@ export default function BookingView({
                         <Clock className="w-5 h-5 text-slate-500" /> Select Time
                     </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {availableSlots.length > 0 ? availableSlots.map((slot) => (
-                            <button
-                                key={slot.id}
-                                onClick={() => {
-                                    setSelectedSlot(slot);
-                                    setBookingError(null);
-                                }}
-                                className={`px-4 py-3 rounded-xl font-medium text-sm transition-all border ${selectedSlot?.id === slot.id
-                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
-                                    }`}
-                            >
-                                {slot.time}
-                            </button>
-                        )) : (
+                        {availableSlots.length > 0 ? availableSlots.map((slot) => {
+                            const past = isSlotPast(slot.time, selectedDate?.label);
+                            return (
+                                <button
+                                    key={slot.id}
+                                    disabled={past}
+                                    onClick={() => {
+                                        setSelectedSlot(slot);
+                                        setBookingError(null);
+                                    }}
+                                    className={`px-4 py-3 rounded-xl font-medium text-sm transition-all border ${past
+                                            ? 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed line-through'
+                                            : selectedSlot?.id === slot.id
+                                                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
+                                                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                        }`}
+                                >
+                                    {slot.time}{past ? ' (Passed)' : ''}
+                                </button>
+                            );
+                        }) : (
                             <div className="col-span-full text-center p-6 bg-slate-50 rounded-xl text-slate-500">
                                 No available slots for this department today.
                             </div>

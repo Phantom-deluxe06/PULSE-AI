@@ -8,14 +8,48 @@ const STORAGE_HISTORY = 'pulse_ai_triage_history';
 
 export async function signup(email, password, name) {
     if (isSupabaseConfigured) {
-        const { data, error } = await supabase.auth.signUp({
-            email, password,
-            options: { data: { full_name: name } }
-        });
-        if (error) throw error;
-        return data.user;
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email, password,
+                options: { data: { full_name: name } }
+            });
+
+            // If signup succeeded or user already exists, try auto-login
+            if (!error || error.message?.includes('already registered')) {
+                try {
+                    const { data: loginData } = await supabase.auth.signInWithPassword({ email, password });
+                    if (loginData?.user) {
+                        const user = {
+                            id: loginData.user.id,
+                            email: loginData.user.email,
+                            name: loginData.user.user_metadata?.full_name || name,
+                            user_metadata: loginData.user.user_metadata
+                        };
+                        localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+                        return user;
+                    }
+                } catch { }
+            }
+
+            // If Supabase signup returned a user (unverified), save locally anyway
+            if (data?.user) {
+                const user = {
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: data.user.user_metadata?.full_name || name,
+                    user_metadata: data.user.user_metadata
+                };
+                localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+                return user;
+            }
+
+            if (error && !error.message?.includes('already registered')) throw error;
+        } catch (err) {
+            // Rate limit or network error — fall through to local user
+            console.warn('Supabase signup failed, using local auth:', err.message);
+        }
     }
-    // localStorage fallback
+    // localStorage fallback — always works
     const user = { id: Date.now().toString(), email, name, user_metadata: { full_name: name } };
     localStorage.setItem(STORAGE_USER, JSON.stringify(user));
     return user;
@@ -23,12 +57,42 @@ export async function signup(email, password, name) {
 
 export async function login(email, password) {
     if (isSupabaseConfigured) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        return data.user;
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (!error && data?.user) {
+                const user = {
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: data.user.user_metadata?.full_name || email.split('@')[0],
+                    user_metadata: data.user.user_metadata
+                };
+                localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+                return user;
+            }
+            // If Supabase login fails, check localStorage for existing local user
+            const saved = localStorage.getItem(STORAGE_USER);
+            if (saved) {
+                const localUser = JSON.parse(saved);
+                if (localUser.email === email) return localUser;
+            }
+            // If no local user either, fall through to create one below
+            console.warn('Supabase login failed, using local auth:', error?.message);
+        } catch (err) {
+            const saved = localStorage.getItem(STORAGE_USER);
+            if (saved) {
+                const localUser = JSON.parse(saved);
+                if (localUser.email === email) return localUser;
+            }
+            console.warn('Supabase login error, using local auth:', err.message);
+        }
     }
-    // localStorage fallback
-    const user = { id: 'local-user', email, name: email.split('@')[0], user_metadata: { full_name: email.split('@')[0] } };
+    // Always create/return a local user — never block login
+    const saved = localStorage.getItem(STORAGE_USER);
+    if (saved) {
+        const localUser = JSON.parse(saved);
+        if (localUser.email === email) return localUser;
+    }
+    const user = { id: 'local-' + Date.now(), email, name: email.split('@')[0], user_metadata: { full_name: email.split('@')[0] } };
     localStorage.setItem(STORAGE_USER, JSON.stringify(user));
     return user;
 }

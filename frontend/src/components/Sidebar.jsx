@@ -57,15 +57,19 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
                 {/* User Card */}
                 {currentUser && (
                     <div className="px-4 py-4 border-b border-slate-100">
-                        <div className="flex items-center gap-3 px-2">
+                        <button
+                            onClick={() => { setCurrentView('profile'); setIsOpen(false); }}
+                            className="w-full flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-slate-50 transition-colors group"
+                        >
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm">
                                 {currentUser.name?.[0]?.toUpperCase() || 'P'}
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 text-left">
                                 <p className="text-sm font-bold text-slate-900 truncate">{currentUser.name}</p>
                                 <p className="text-xs text-slate-400 truncate">{currentUser.email}</p>
                             </div>
-                        </div>
+                            <span className="text-[10px] font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-wider shrink-0">Edit</span>
+                        </button>
                     </div>
                 )}
 
