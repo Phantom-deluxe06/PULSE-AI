@@ -98,11 +98,11 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
         ;
 
     return (
-        <div className="animate-in fade-in zoom-in-95 duration-500 max-w-2xl mx-auto py-8 px-4 sm:px-6">
+        <div className="animate-in fade-in zoom-in-95 duration-500 max-w-2xl mx-auto py-8 px-4 sm:px-6 pb-24 lg:pb-8">
 
             <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
                 {/* Header Ribbon */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="bg-primary p-8 text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div>
                         <h2 className="text-3xl font-extrabold tracking-tight mb-2">Patient Details</h2>
                         <p className="text-blue-100 font-medium">Let's get to know you before we assess your symptoms.</p>
@@ -123,8 +123,8 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
                                     type="button"
                                     onClick={() => handleReturningStatus('yes')}
                                     className={`flex-1 py-3 px-4 rounded-xl font-semibold border-2 transition-all ${formData.returningPatient === 'yes'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary/50 hover:bg-slate-50'
                                         }`}
                                 >
                                     Yes, I'm returning
@@ -133,8 +133,8 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
                                     type="button"
                                     onClick={() => handleReturningStatus('no')}
                                     className={`flex-1 py-3 px-4 rounded-xl font-semibold border-2 transition-all ${formData.returningPatient === 'no'
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                        : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-slate-50'
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary/50 hover:bg-slate-50'
                                         }`}
                                 >
                                     No, I'm a new patient
@@ -144,17 +144,17 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
 
                         {/* Optional Patient ID Field (Animated entry) */}
                         {formData.returningPatient === 'yes' && (
-                            <div className="animate-in slide-in-from-top-4 fade-in duration-300 p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                            <div className="animate-in slide-in-from-top-4 fade-in duration-300 p-5 bg-secondary/10 rounded-2xl border border-secondary/30">
                                 <label className="block text-sm font-bold text-slate-900 mb-2">Patient ID or Previous Booking Reference (Optional)</label>
                                 <div className="relative">
-                                    <Activity className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-400" />
+                                    <Activity className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary" />
                                     <input
                                         type="text"
                                         name="patientId"
                                         value={formData.patientId}
                                         onChange={handleChange}
                                         placeholder="e.g. PAT-12345"
-                                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all"
                                     />
                                 </div>
                             </div>
@@ -268,16 +268,13 @@ export default function PatientDetailsView({ setCurrentView, updateTriageState, 
                                 type="submit"
                                 disabled={!isFormValid}
                                 className={`w-full sm:w-auto group relative px-8 py-3.5 rounded-xl font-bold flex items-center justify-center transition-all ${isFormValid
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 active:scale-[0.98]'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98]'
                                     : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                     }`}
                             >
                                 <span className="relative z-10 flex items-center">
                                     Continue to Symptoms <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </span>
-                                {isFormValid && (
-                                    <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-blue-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl border border-transparent"></div>
-                                )}
                             </button>
                         </div>
 

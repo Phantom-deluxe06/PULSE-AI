@@ -121,8 +121,8 @@ export default function HomeView({ setCurrentView }) {
                 {/* Hero content */}
                 <div className={`relative text-center max-w-5xl mx-auto transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
 
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 text-blue-300 text-sm font-medium mb-8 backdrop-blur-sm">
-                        <Activity className="w-4 h-4 animate-pulse text-blue-400" />
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary-light text-sm font-medium mb-8 backdrop-blur-sm">
+                        <Activity className="w-4 h-4 animate-pulse text-primary" />
                         Powered by Gemini 2.5 Flash · AI-First Healthcare
                     </div>
 
@@ -141,7 +141,7 @@ export default function HomeView({ setCurrentView }) {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
                             onClick={() => setCurrentView('signup')}
-                            className="group px-8 py-4 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-bold shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-400/40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                            className="group px-8 py-4 rounded-full bg-primary hover:bg-opacity-90 text-white font-bold shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                         >
                             <UserPlus className="w-5 h-5" />
                             Get Started Free
@@ -192,7 +192,7 @@ export default function HomeView({ setCurrentView }) {
                 <div className="max-w-6xl mx-auto">
                     <Reveal direction="up">
                         <div className="text-center mb-16">
-                            <span className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 mb-3 block">Our Specialties</span>
+                            <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-3 block">Our Specialties</span>
                             <h2 className="text-4xl sm:text-5xl font-black text-slate-900">World-Class Care,<br />For Every Condition</h2>
                             <p className="text-slate-500 mt-4 max-w-xl mx-auto">AI-powered triage routes you to the exact specialist your condition requires — instantly.</p>
                         </div>
@@ -340,7 +340,7 @@ export default function HomeView({ setCurrentView }) {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button
                                 onClick={() => setCurrentView('signup')}
-                                className="group px-8 py-4 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-blue-500/25"
+                                className="group px-8 py-4 rounded-full bg-primary hover:bg-opacity-90 text-white font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-primary/25"
                             >
                                 <UserPlus className="w-5 h-5" />
                                 Create Free Account

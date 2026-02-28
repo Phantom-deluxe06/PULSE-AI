@@ -7,13 +7,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        'primary': '#2563eb',
-        'primary-light': '#dbeafe',
-        'slate-dark': '#1e293b',
-        'success': '#16a34a',
-        'warning': '#eab308',
-        'danger': '#dc2626',
-      }
+        'primary': '#0891B2',
+        'secondary': '#22D3EE',
+        'cta': '#059669',
+        'background-light': '#ECFEFF',
+        'text-dark': '#164E63',
+      },
+      fontFamily: {
+        sans: ['"Fira Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"Fira Code"', 'monospace'],
+      },
     },
   },
   plugins: [],

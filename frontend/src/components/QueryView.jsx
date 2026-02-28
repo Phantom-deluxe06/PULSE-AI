@@ -80,7 +80,7 @@ export default function QueryView({
     if (isLoading) return <TriageSkeleton />;
 
     return (
-        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 pt-6 pb-12">
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 pt-6 pb-24 lg:pb-12 px-4">
 
             {/* Header */}
             <div className="text-center">
@@ -98,7 +98,7 @@ export default function QueryView({
                                 <button
                                     key={s}
                                     onClick={() => setSymptoms(s)}
-                                    className="text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 bg-white hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition"
+                                    className="text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 bg-white hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition"
                                 >
                                     {s}
                                 </button>
@@ -113,7 +113,7 @@ export default function QueryView({
                             onChange={(e) => setSymptoms(e.target.value)}
                             placeholder="E.g., I've had a sharp pain in my chest since this morning and my left arm feels numb..."
                             rows={5}
-                            className={`w-full p-5 pr-14 border text-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none resize-none transition ${isListening ? 'border-red-400 ring-2 ring-red-300' : 'border-slate-200'}`}
+                            className={`input w-full p-5 pr-14 resize-none transition ${isListening ? 'border-red-400 ring-2 ring-red-300' : 'border-slate-200'}`}
                         />
                         {/* Voice Button */}
                         <button
@@ -122,7 +122,7 @@ export default function QueryView({
                             title={recognitionRef.current ? "Click to speak" : "Voice not supported in this browser"}
                             className={`absolute bottom-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all ${isListening
                                 ? 'bg-red-500 text-white animate-pulse'
-                                : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'
+                                : 'bg-slate-100 text-slate-500 hover:bg-primary/10 hover:text-primary'
                                 }`}
                         >
                             {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -142,7 +142,7 @@ export default function QueryView({
                     <button
                         onClick={handleTriage}
                         disabled={isLoading || !symptoms.trim()}
-                        className="bg-blue-600 text-white p-4 rounded-2xl font-bold hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2 text-base shadow-lg shadow-blue-500/30"
+                        className="btn-primary w-full flex items-center justify-center gap-2 text-base shadow-lg shadow-primary/30 disabled:opacity-50"
                     >
                         {isLoading ? (
                             <><Loader2 className="w-5 h-5 animate-spin" /> Analyzing Symptoms...</>
@@ -157,7 +157,7 @@ export default function QueryView({
                 </div>
             ) : (
                 /* Triage Result Card */
-                <div className="bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                <div className="card overflow-hidden !px-0 !py-0 !border !border-slate-100 shadow-sm">
 
                     {/* Result Header */}
                     <div className="bg-white px-6 py-5 border-b border-slate-100 flex items-center justify-between">
@@ -187,11 +187,11 @@ export default function QueryView({
                         </div>
 
                         {triageResult.tips && triageResult.tips.length > 0 && (
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                                <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                                <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2 flex items-center gap-1">
                                     <Sparkles className="w-3.5 h-3.5" /> Home Remedies & Tips
                                 </p>
-                                <ul className="space-y-1.5 list-disc list-inside text-sm text-blue-900">
+                                <ul className="space-y-1.5 list-disc list-inside text-sm text-slate-700">
                                     {triageResult.tips.map((tip, idx) => (
                                         <li key={idx}>{tip}</li>
                                     ))}
@@ -210,7 +210,7 @@ export default function QueryView({
                         </button>
                         <button
                             onClick={() => setCurrentView('booking')}
-                            className="flex-1 bg-blue-600 text-white p-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition"
+                            className="flex-1 btn-primary p-3 text-sm"
                         >
                             Book Appointment →
                         </button>

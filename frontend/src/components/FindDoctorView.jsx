@@ -65,16 +65,16 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
     };
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto py-8 px-4">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto py-8 px-4 pb-24 lg:pb-8">
             <div className="mb-6">
                 <h2 className="text-3xl font-bold text-slate-900">Find a Doctor</h2>
                 <p className="text-slate-500 mt-1">Search, filter, and book appointments with specialists.</p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6 shadow-sm mb-6">
+            <div className="card p-4 sm:p-6 mb-6">
                 <div className="relative mb-4">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by doctor name or specialty..." className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by doctor name or specialty..." className="input w-full pl-12 pr-4 py-3" />
                 </div>
                 <div className="flex flex-wrap gap-3">
                     {[
@@ -83,7 +83,7 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                         { label: 'Type', value: consultType, options: CONSULT_TYPES, setter: setConsultType },
                     ].map((filter) => (
                         <div key={filter.label} className="relative">
-                            <select value={filter.value} onChange={(e) => filter.setter(e.target.value)} className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            <select value={filter.value} onChange={(e) => filter.setter(e.target.value)} className="appearance-none pl-3 pr-8 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                                 {filter.options.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -96,12 +96,12 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filtered.map((doc) => (
-                    <div key={doc.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all hover:shadow-md cursor-pointer ${selectedDoctor?.id === doc.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-100'}`} onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setBooked(false); }}>
+                    <div key={doc.id} className={`card !p-0 overflow-hidden transition-all hover:shadow-md cursor-pointer ${selectedDoctor?.id === doc.id ? 'border-primary ring-2 ring-primary/20' : 'border-slate-100'}`} onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setBooked(false); }}>
                         <div className="p-5 flex gap-4">
                             <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl shrink-0">{doc.img}</div>
                             <div className="flex-1 min-w-0">
                                 <h4 className="text-base font-bold text-slate-900 truncate">{doc.name}</h4>
-                                <p className="text-sm text-blue-600 font-semibold">{doc.specialty}</p>
+                                <p className="text-sm text-primary font-semibold">{doc.specialty}</p>
                                 <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
                                     <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {doc.hospital}</span>
                                     <span className="flex items-center gap-1"><Star className="w-3 h-3 text-amber-500" /> {doc.rating} ({doc.reviews})</span>
@@ -109,7 +109,7 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                             </div>
                             <div className="text-right shrink-0">
                                 <p className="text-lg font-black text-slate-900">{doc.fee}</p>
-                                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full mt-1 ${doc.available.includes('Today') ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full mt-1 ${doc.available.includes('Today') ? 'bg-emerald-100 text-emerald-700' : 'bg-primary/10 text-primary'}`}>
                                     <Clock className="w-3 h-3" /> {doc.available.includes('Today') ? 'Available Today' : doc.available.split(',')[0]}
                                 </span>
                             </div>
@@ -119,7 +119,7 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                         {(() => {
                             const status = getLiveStatus(doc.id);
                             return (
-                                <div className="border-t border-slate-100 px-5 py-3 bg-gradient-to-r from-slate-50 to-blue-50/40 flex items-center gap-4 sm:gap-6 flex-wrap">
+                                <div className="border-t border-slate-100 px-5 py-3 bg-gradient-to-r from-slate-50 to-primary/5 flex items-center gap-4 sm:gap-6 flex-wrap">
                                     <div className="flex items-center gap-1.5">
                                         <span className="relative flex h-2 w-2">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -128,7 +128,7 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                                         <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Live</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                                        <Clock className="w-3.5 h-3.5 text-blue-500" />
+                                        <Clock className="w-3.5 h-3.5 text-primary" />
                                         <span>Now attending: <strong className="text-slate-900">Token #{status.currentToken}</strong></span>
                                     </div>
                                     <div className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -156,10 +156,10 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                                     <>
                                         {/* Tabs */}
                                         <div className="flex border-b border-slate-200">
-                                            <button onClick={() => setActiveTab('book')} className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${activeTab === 'book' ? 'text-blue-600 border-b-2 border-blue-600 bg-white' : 'text-slate-400 hover:text-slate-600'}`}>
+                                            <button onClick={() => setActiveTab('book')} className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${activeTab === 'book' ? 'text-primary border-b-2 border-primary bg-white' : 'text-slate-400 hover:text-slate-600'}`}>
                                                 <Calendar className="w-4 h-4" /> Book Appointment
                                             </button>
-                                            <button onClick={() => setActiveTab('query')} className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${activeTab === 'query' ? 'text-blue-600 border-b-2 border-blue-600 bg-white' : 'text-slate-400 hover:text-slate-600'}`}>
+                                            <button onClick={() => setActiveTab('query')} className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${activeTab === 'query' ? 'text-primary border-b-2 border-primary bg-white' : 'text-slate-400 hover:text-slate-600'}`}>
                                                 <MessageSquare className="w-4 h-4" /> Ask a Question
                                             </button>
                                         </div>
@@ -186,7 +186,7 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                                                             })();
                                                             const isDisabled = isBooked || isPast;
                                                             return (
-                                                                <button key={slot} disabled={isDisabled} onClick={() => setSelectedSlot(slot)} className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${isDisabled ? 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed line-through' : selectedSlot === slot ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300'}`}>
+                                                                <button key={slot} disabled={isDisabled} onClick={() => setSelectedSlot(slot)} className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${isDisabled ? 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed line-through' : selectedSlot === slot ? 'bg-primary text-white border-primary shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:border-primary/30'}`}>
                                                                     {slot}{isPast && !isBooked ? ' (Passed)' : ''}
                                                                 </button>
                                                             );
@@ -195,9 +195,9 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex gap-2 items-center text-xs text-slate-400">
                                                             <span className="w-3 h-3 bg-slate-100 rounded border border-slate-200 inline-block" /> Booked
-                                                            <span className="w-3 h-3 bg-blue-600 rounded inline-block ml-2" /> Selected
+                                                            <span className="w-3 h-3 bg-primary rounded inline-block ml-2" /> Selected
                                                         </div>
-                                                        <button onClick={handleBook} disabled={!selectedSlot} className={`ml-auto px-6 py-2 rounded-xl text-sm font-bold transition-all ${selectedSlot ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
+                                                        <button onClick={handleBook} disabled={!selectedSlot} className={`ml-auto px-6 py-2 rounded-xl text-sm font-bold transition-all ${selectedSlot ? 'bg-primary text-white shadow-sm hover:opacity-90 active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
                                                             Book Now
                                                         </button>
                                                     </div>
@@ -216,14 +216,14 @@ export default function FindDoctorView({ setCurrentView, filterDepartment, onBoo
                                                         maxLength={500}
                                                         rows={4}
                                                         placeholder="e.g. I've been experiencing mild chest pain for the past 2 days. Should I be concerned?"
-                                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                                                        className="input w-full px-4 py-3 text-sm text-slate-800 placeholder:text-slate-300 resize-none"
                                                     />
                                                     <div className="flex items-center justify-between mt-3">
                                                         <span className="text-xs text-slate-400">{queryText.length}/500 characters</span>
                                                         <button
                                                             onClick={() => { setQuerySent(true); setTimeout(() => { setQuerySent(false); setSelectedDoctor(null); setQueryText(''); }, 2500); }}
                                                             disabled={queryText.trim().length < 10}
-                                                            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all ${queryText.trim().length >= 10 ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                                                            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold transition-all ${queryText.trim().length >= 10 ? 'bg-primary text-white shadow-sm hover:opacity-90 active:scale-95' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
                                                         >
                                                             <Send className="w-4 h-4" /> Submit Query
                                                         </button>

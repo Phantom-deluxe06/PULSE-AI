@@ -10,29 +10,19 @@ const navItems = [
     { id: 'history', label: 'Triage History', icon: History },
 ];
 
-export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout, isAdmin }) {
-    const [isOpen, setIsOpen] = useState(false);
-
+export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout, isAdmin, isOpen, setIsOpen }) {
     return (
         <>
-            {/* Mobile hamburger */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className="lg:hidden fixed bottom-6 left-6 z-40 w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center hover:bg-blue-700 transition active:scale-95"
-            >
-                <Menu className="w-5 h-5" />
-            </button>
-
-            {/* Overlay for mobile */}
+            {/* Overlay for mobile - controlled externally now or by Sidebar state */}
             {isOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
+                    className="lg:hidden fixed inset-0 bg-black/40 z-[45] backdrop-blur-sm"
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`fixed top-0 left-0 z-50 h-[calc(100vh-64px)] lg:h-full w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
                 {/* Logo */}
                 <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100">

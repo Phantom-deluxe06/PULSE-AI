@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import HomeView from './components/HomeView';
 import LoginView from './components/LoginView';
 import SignupView from './components/SignupView';
@@ -16,9 +17,9 @@ import ProfileView from './components/ProfileView';
 import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
-import TriageHistory from './components/TriageHistory';
 import AdminDashboardView from './components/AdminDashboardView';
 import ToastContainer from './components/Toast';
+import ChatBot from './components/ChatBot';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
 import { login as authLogin, signup as authSignup, logout as authLogout } from './utils/auth';
@@ -55,13 +56,15 @@ function App() {
   });
   const { toasts, showToast, removeToast } = useToast();
 
-  // Navigate — updates state AND browser history
   const navigate = (view) => {
     setCurrentView(view);
     window.history.pushState({ view }, '', `#${view}`);
   };
 
   const isAdmin = currentUser?.email === 'admin@pulse.ai';
+
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Core State
   const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
@@ -269,18 +272,28 @@ function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* Sidebar — only on authenticated non-home views */}
+      {/* Sidebar and ChatBot — only on authenticated non-home views */}
       {!isPublicView && currentUser && (
-        <Sidebar
-          currentView={currentView}
-          setCurrentView={navigate}
-          currentUser={{
-            name: currentUser.user_metadata?.full_name || currentUser.email,
-            email: currentUser.email
-          }}
-          isAdmin={isAdmin}
-          onLogout={handleLogout}
-        />
+        <>
+          <Sidebar
+            currentView={currentView}
+            setCurrentView={navigate}
+            currentUser={{
+              name: currentUser.user_metadata?.full_name || currentUser.email,
+              email: currentUser.email
+            }}
+            isAdmin={isAdmin}
+            onLogout={handleLogout}
+            isOpen={isMobileMenuOpen}
+            setIsOpen={setIsMobileMenuOpen}
+          />
+          <BottomNav
+            currentView={currentView}
+            setCurrentView={navigate}
+            onOpenMenu={() => setIsMobileMenuOpen(true)}
+          />
+          <ChatBot />
+        </>
       )}
 
       {showEmergency && triageResult && (
@@ -298,7 +311,7 @@ function App() {
         />
       )}
 
-      <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${!isPublicView ? 'lg:ml-64' : ''}`}>
+      <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all pb-24 lg:pb-0 ${!isPublicView ? 'lg:ml-64' : ''}`}>
         {/* Public Views */}
         {currentView === 'home' && <HomeView setCurrentView={navigate} />}
         {currentView === 'login' && (

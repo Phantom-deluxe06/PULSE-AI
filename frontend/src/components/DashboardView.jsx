@@ -53,10 +53,10 @@ export default function DashboardView({ appointments, setCurrentView, triageHist
     const currentTip = HEALTH_TIPS[tipIndex];
 
     const stats = [
-        { label: 'Upcoming', value: appointments.length, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Triage Done', value: triageHistory?.length || 0, icon: HeartPulse, color: 'text-indigo-600', bg: 'bg-indigo-50', sub: lastTriage ? timeAgo(lastTriage.timestamp) : null },
+        { label: 'Upcoming', value: appointments.length, icon: Calendar, color: 'text-primary', bg: 'bg-primary/10' },
+        { label: 'Triage Done', value: triageHistory?.length || 0, icon: HeartPulse, color: 'text-secondary', bg: 'bg-secondary/10', sub: lastTriage ? timeAgo(lastTriage.timestamp) : null },
         { label: 'Refills Due', value: 2, icon: Pill, color: 'text-amber-600', bg: 'bg-amber-50' },
-        { label: 'Health Score', value: '87%', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Health Score', value: '87%', icon: TrendingUp, color: 'text-cta', bg: 'bg-cta/10' },
     ];
 
     return (
@@ -73,7 +73,7 @@ export default function DashboardView({ appointments, setCurrentView, triageHist
                 {stats.map((stat) => {
                     const Icon = stat.icon;
                     return (
-                        <div key={stat.label} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                        <div key={stat.label} className="card p-5">
                             <div className="flex items-center justify-between mb-3">
                                 <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center`}>
                                     <Icon className={`w-5 h-5 ${stat.color}`} />
@@ -138,8 +138,8 @@ export default function DashboardView({ appointments, setCurrentView, triageHist
             </div>
 
             {/* Appointments + Notifications */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20 lg:pb-0">
+                <div className="card p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-blue-600" /> Upcoming
@@ -180,7 +180,7 @@ export default function DashboardView({ appointments, setCurrentView, triageHist
                 </div>
 
                 {/* Recent Triage History */}
-                <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                <div className="card p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                             <History className="w-5 h-5 text-indigo-600" /> Recent Triages

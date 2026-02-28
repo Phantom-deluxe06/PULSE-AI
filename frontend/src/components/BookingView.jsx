@@ -76,7 +76,7 @@ export default function BookingView({
     };
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto py-8 px-4">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto py-8 px-4 pb-24 lg:pb-8">
             <div className="mb-8">
                 <h2 className="text-3xl font-bold text-slate-900">Schedule Appointment</h2>
                 <p className="text-slate-600 mt-1">
@@ -84,9 +84,8 @@ export default function BookingView({
                 </p>
             </div>
 
-            {/* Triage Recommendation Card */}
             {triageResult && (
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-8 flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center">
+                <div className="card mb-8 flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Recommended</span>
@@ -97,11 +96,11 @@ export default function BookingView({
                             </span>
                         </div>
                         <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                            <Building2 className="w-6 h-6 text-blue-600" /> {recommendedDept}
+                            <Building2 className="w-6 h-6 text-primary" /> {recommendedDept}
                         </h3>
                         <p className="text-sm text-slate-600 mt-1">Based on your triage assessment</p>
                     </div>
-                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 hidden sm:flex">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary hidden sm:flex">
                         <User className="w-6 h-6" />
                     </div>
                 </div>
@@ -117,7 +116,7 @@ export default function BookingView({
                     placeholder="Enter Patient Full Name"
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
-                    className="w-full sm:max-w-md p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none"
+                    className="input w-full sm:max-w-md"
                 />
             </div>
 
@@ -135,8 +134,8 @@ export default function BookingView({
                                 setBookingError(null);
                             }}
                             className={`shrink-0 px-5 py-3 rounded-xl font-medium text-sm transition-all border ${selectedDate?.label === dateItem.label
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
-                                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                                : 'bg-white text-slate-700 border-slate-200 hover:border-primary/50 hover:bg-primary/5'
                                 }`}
                         >
                             {dateItem.label}
@@ -163,10 +162,10 @@ export default function BookingView({
                                         setBookingError(null);
                                     }}
                                     className={`px-4 py-3 rounded-xl font-medium text-sm transition-all border ${past
-                                            ? 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed line-through'
-                                            : selectedSlot?.id === slot.id
-                                                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20'
-                                                : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
+                                        ? 'bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed line-through'
+                                        : selectedSlot?.id === slot.id
+                                            ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                                            : 'bg-white text-slate-700 border-slate-200 hover:border-primary/50 hover:bg-primary/5'
                                         }`}
                                 >
                                     {slot.time}{past ? ' (Passed)' : ''}
@@ -193,10 +192,9 @@ export default function BookingView({
                 </div>
                 <button
                     onClick={handleConfirm}
-                    disabled={!selectedSlot || !patientName.trim()}
-                    className={`w-full sm:w-auto px-8 py-3 rounded-xl font-bold flex items-center justify-center transition-all ${selectedSlot && patientName.trim()
-                        ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95'
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    className={`w-full sm:w-auto btn-primary flex items-center justify-center transition-all ${selectedSlot && patientName.trim()
+                        ? 'opacity-100'
+                        : 'opacity-50 cursor-not-allowed'
                         }`}
                 >
                     Confirm Appointment <ChevronRight className="ml-1 w-5 h-5" />

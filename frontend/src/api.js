@@ -120,3 +120,68 @@ Patient symptoms: "${symptomText}"`;
     }
 }
 
+export async function sendChatMessage(messages) {
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+    if (!API_KEY) {
+        throw new Error("API key is missing. Please set VITE_GEMINI_API_KEY in your .env file.");
+    }
+
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+
+    // Format conversation history for Gemini
+    // Gemini expects { role: 'user'|'model', parts: [{ text: '' }] }
+    const formattedMessages = messages.map(msg => ({
+        role: msg.isBot ? 'model' : 'user',
+        parts: [{ text: msg.text }]
+    }));
+
+    // System prompt basically injected as the first message or prepend
+    const systemPrompt = `You are Pulse AI, a friendly, concise, and professional AI healthcare assistant.
+Your role:
+1. Provide helpful, accurate, general health information and wellness tips.
+2. Be empathetic and supportive.
+3. Keep responses relatively brief (1-3 paragraphs maximum) and easy to read.
+
+Important constraints:
+- DO NOT provide definitive medical diagnoses or prescribe medications.
+- ALWAYS encourage users to consult a real human doctor for serious concerns.
+- If a user mentions severe symptoms (e.g., chest pain, severe bleeding, difficulty breathing), strongly advise them to seek emergency care immediately.
+- Refuse to answer non-health-related or inappropriate queries politely.
+
+Respond directly to the user's latest message considering the conversation history.`;
+
+    // We prepend the system instruction context to the first user message if possible,
+    // or we can use the system_instruction field
+
+    const requestBody = {
+        system_instruction: {
+            parts: [{ text: systemPrompt }]
+        },
+        contents: formattedMessages,
+        generationConfig: {
+            temperature: 0.7,
+            topP: 0.9,
+            maxOutputTokens: 500,
+        }
+    };
+
+    const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`API error ${response.status}: ${errData?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+
+    // Extract actual response skipping thought blocks
+    const actualPart = parts.find(p => !p.thought && typeof p.text === 'string') || parts[0] || {};
+    return actualPart.text || "I'm sorry, I couldn't process that response.";
+}
+
