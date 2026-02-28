@@ -5,6 +5,7 @@ export async function analyzeSymptoms(symptomText) {
         throw new Error("API key is missing. Please set VITE_GEMINI_API_KEY in your .env file.");
     }
 
+    // gemini-2.5-flash — latest model. It's a thinking model: skip thought parts, use the actual text part.
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     const validDepts = ["General Medicine", "Cardiology", "Neurology", "Pediatrics", "Orthopedics"];
@@ -40,9 +41,9 @@ Patient symptoms: "${symptomText}"`;
     const requestBody = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 0.2,
+            temperature: 0.1,
             topP: 0.8,
-            maxOutputTokens: 300
+            maxOutputTokens: 1024  // Increased — 300 was truncating the JSON response
         }
     };
 
@@ -59,10 +60,22 @@ Patient symptoms: "${symptomText}"`;
         }
 
         const data = await response.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const parts = data?.candidates?.[0]?.content?.parts || [];
 
-        // Strip any accidental markdown fences
-        const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        // gemini-2.5-flash is a thinking model — parts[0] may be an internal thought block.
+        // Find the first part that is NOT marked as a thought to get the actual response.
+        const actualPart = parts.find(p => !p.thought && typeof p.text === 'string') || parts[0] || {};
+        const rawText = actualPart.text || '';
+
+        // Robust JSON extraction: handles markdown fences and inline text
+        let cleaned = rawText
+            .replace(/```json/gi, '')
+            .replace(/```/g, '')
+            .trim();
+
+        // Extract JSON object even if wrapped in explanatory text
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (jsonMatch) cleaned = jsonMatch[0];
 
         let parsed;
         try {
@@ -79,8 +92,11 @@ Patient symptoms: "${symptomText}"`;
             else parsed.department = "General Medicine";
         }
 
-        // Clamp urgency just in case
+        // Normalise urgency
         parsed.urgency = Math.min(5, Math.max(1, Math.round(Number(parsed.urgency) || 1)));
+
+        // Ensure tips is always an array
+        if (!Array.isArray(parsed.tips)) parsed.tips = [];
 
         if (!validateTriageResult(parsed)) {
             console.error("Validation failed on:", parsed);
@@ -90,16 +106,17 @@ Patient symptoms: "${symptomText}"`;
         return parsed;
     };
 
-    // Exponential backoff for AI API calls (5 retries: 1s, 2s, 4s, 8s, 16s)
-    const maxRetries = 5;
+    // Exponential backoff (3 retries: 1s, 2s, 4s)
+    const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
         try {
             return await makeRequest();
         } catch (err) {
             if (i === maxRetries - 1) throw err;
             const delay = Math.pow(2, i) * 1000;
-            console.warn(`AI API call failed. Retrying in ${delay / 1000}s...`);
+            console.warn(`AI API call failed (attempt ${i + 1}). Retrying in ${delay / 1000}s...`, err.message);
             await new Promise(r => setTimeout(r, delay));
         }
     }
 }
+

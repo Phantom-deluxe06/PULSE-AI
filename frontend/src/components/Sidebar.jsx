@@ -1,4 +1,4 @@
-import { LayoutDashboard, UserSearch, HeartPulse, Pill, FileText, X, Menu, CalendarCheck, LogOut, UserCircle } from 'lucide-react';
+import { LayoutDashboard, UserSearch, HeartPulse, Pill, FileText, X, Menu, CalendarCheck, LogOut, History } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
     { id: 'symptom-checker', label: 'AI Triage', icon: HeartPulse },
     { id: 'pharmacy', label: 'Pharmacy & Refills', icon: Pill },
     { id: 'records', label: 'Medical Records', icon: FileText },
+    { id: 'history', label: 'Triage History', icon: History },
 ];
 
 export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout, isAdmin }) {

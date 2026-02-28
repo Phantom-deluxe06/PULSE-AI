@@ -18,9 +18,12 @@ import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
 import TriageHistory from './components/TriageHistory';
 import AdminDashboardView from './components/AdminDashboardView';
+import ToastContainer from './components/Toast';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
-import { login as authLogin, signup as authSignup, logout as authLogout, getCurrentUser } from './utils/auth';
+import { login as authLogin, signup as authSignup, logout as authLogout } from './utils/auth';
+import { supabase } from './supabase';
+import { useToast } from './utils/useToast';
 
 const STORAGE_APPOINTMENTS = 'pulse_ai_appointments';
 const STORAGE_HISTORY = 'pulse_ai_triage_history';
@@ -45,7 +48,18 @@ function saveToStorage(key, data) {
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authInitialized, setAuthInitialized] = useState(false);
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState(() => {
+    // Restore view from URL hash on load
+    const hash = window.location.hash.replace('#', '');
+    return hash || 'home';
+  });
+  const { toasts, showToast, removeToast } = useToast();
+
+  // Navigate — updates state AND browser history
+  const navigate = (view) => {
+    setCurrentView(view);
+    window.history.pushState({ view }, '', `#${view}`);
+  };
 
   const isAdmin = currentUser?.email === 'admin@pulse.ai';
 
@@ -72,11 +86,31 @@ function App() {
   // Find Doctor filter from Symptom Checker
   const [filterDepartment, setFilterDepartment] = useState(null);
 
-  // Initialize auth state
+  // Browser back/forward button support
   useEffect(() => {
+    const handlePop = (e) => {
+      const view = e.state?.view || window.location.hash.replace('#', '') || 'home';
+      setCurrentView(view);
+    };
+    window.addEventListener('popstate', handlePop);
+    // Set initial history entry so back button works from first page
+    window.history.replaceState({ view: currentView }, '', `#${currentView}`);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initialize auth state (no currentView dep — prevents re-registering on every nav)
+  useEffect(() => {
+    // Guard: supabase may be null if env vars are missing
+    if (!supabase) {
+      setAuthInitialized(true);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUser(session?.user ?? null);
-      if (session?.user && currentView === 'home') setCurrentView('dashboard');
+      setAuthInitialized(true);
+    }).catch(() => {
+      // Supabase unreachable — still mark as initialized so app renders
       setAuthInitialized(true);
     });
 
@@ -85,7 +119,7 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
-  }, [currentView]);
+  }, []); // run once only
 
   // Persist to localStorage
   useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
@@ -93,21 +127,29 @@ function App() {
 
   // Auth handlers
   const handleLogin = async (email, password) => {
-    const user = await authLogin(email, password);
-    setCurrentUser(user);
-    setCurrentView('dashboard');
+    try {
+      const user = await authLogin(email, password);
+      setCurrentUser(user);
+      navigate('dashboard');
+    } catch (err) {
+      showToast(err.message || 'Login failed. Please try again.', 'error');
+    }
   };
 
   const handleSignup = async (email, password, name) => {
-    const user = await authSignup(email, password, name);
-    setCurrentUser(user);
-    setCurrentView('patient-details');
+    try {
+      const user = await authSignup(email, password, name);
+      setCurrentUser(user);
+      navigate('patient-details');
+    } catch (err) {
+      showToast(err.message || 'Sign up failed. Please try again.', 'error');
+    }
   };
 
   const handleLogout = async () => {
     await authLogout();
     setCurrentUser(null);
-    setCurrentView('home');
+    navigate('home');
   };
 
   const executeTriage = async (symptomsToAnalyze) => {
@@ -130,9 +172,13 @@ function App() {
 
       if (result.urgency === 5) {
         setShowEmergency(true);
+      } else {
+        showToast(`Routed to ${result.department} — Urgency P${result.urgency}`, 'success');
       }
     } catch (err) {
-      setError(err.message || "An error occurred during triage. Please try again.");
+      const msg = err.message || 'An error occurred during triage. Please try again.';
+      setError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +212,7 @@ function App() {
 
     setAppointments(prev => [...prev, newAppointment]);
     setConfirmedAppointment(newAppointment);
-    setCurrentView('confirmation');
+    navigate('confirmation');
     setTriageResult(null);
     setSymptoms('');
     setSelectedSlot(null);
@@ -203,25 +249,31 @@ function App() {
   const publicViews = ['home', 'login', 'signup'];
   const isPublicView = publicViews.includes(currentView);
 
-  // If not logged in and trying to access private views, redirect
-  if (authInitialized && !currentUser && !isPublicView) {
-    setCurrentView('home');
-    return null; // Or render a loading spinner if authInitialized is false
-  }
+  // Guard: unauthenticated users can't access private views
+  useEffect(() => {
+    if (authInitialized && !currentUser && !publicViews.includes(currentView)) {
+      navigate('home');
+    }
+  }, [authInitialized, currentUser, currentView]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Render nothing until authentication state is initialized
   if (!authInitialized) {
-    return null;
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-blue-200">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* Sidebar — only on authenticated views */}
+      {/* Sidebar — only on authenticated non-home views */}
       {!isPublicView && currentUser && (
         <Sidebar
           currentView={currentView}
-          setCurrentView={setCurrentView}
+          setCurrentView={navigate}
           currentUser={{
             name: currentUser.user_metadata?.full_name || currentUser.email,
             email: currentUser.email
@@ -248,19 +300,19 @@ function App() {
 
       <main className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all ${!isPublicView ? 'lg:ml-64' : ''}`}>
         {/* Public Views */}
-        {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
+        {currentView === 'home' && <HomeView setCurrentView={navigate} />}
         {currentView === 'login' && (
           <LoginView
             onLogin={handleLogin}
-            onGoToSignup={() => setCurrentView('signup')}
-            onGoHome={() => setCurrentView('home')}
+            onGoToSignup={() => navigate('signup')}
+            onGoHome={() => navigate('home')}
           />
         )}
         {currentView === 'signup' && (
           <SignupView
             onSignup={handleSignup}
-            onGoToLogin={() => setCurrentView('login')}
-            onGoHome={() => setCurrentView('home')}
+            onGoToLogin={() => navigate('login')}
+            onGoHome={() => navigate('home')}
           />
         )}
 
@@ -268,7 +320,7 @@ function App() {
         <div className={!isPublicView ? 'px-4 sm:px-6 lg:px-8 py-4' : ''}>
           {currentView === 'patient-details' && (
             <PatientDetailsView
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               updateTriageState={updateTriageState}
               initialData={triageState.slideOne}
             />
@@ -276,7 +328,7 @@ function App() {
 
           {currentView === 'slide-two' && (
             <SlideTwoQuery
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               updateTriageState={updateTriageState}
               initialData={triageState.slideTwo}
             />
@@ -284,7 +336,7 @@ function App() {
 
           {currentView === 'slide-three' && (
             <SlideThreePrefs
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               updateTriageState={updateTriageState}
               initialData={triageState.slideThree}
               triageState={triageState}
@@ -295,7 +347,7 @@ function App() {
 
           {currentView === 'query' && (
             <QueryView
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               symptoms={symptoms}
               setSymptoms={setSymptoms}
               isLoading={isLoading}
@@ -308,7 +360,7 @@ function App() {
 
           {currentView === 'booking' && (
             <BookingView
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               triageResult={triageResult}
               patientName={patientName}
               setPatientName={setPatientName}
@@ -324,14 +376,14 @@ function App() {
               appointment={confirmedAppointment}
               onGoToDashboard={() => {
                 setConfirmedAppointment(null);
-                setCurrentView('dashboard');
+                navigate('dashboard');
               }}
             />
           )}
 
           {currentView === 'dashboard' && (
             <DashboardView
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               appointments={appointments}
               triageHistory={triageHistory}
             />
@@ -339,7 +391,7 @@ function App() {
 
           {currentView === 'find-doctor' && (
             <FindDoctorView
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               filterDepartment={filterDepartment}
               onBookAppointment={handleDoctorBook}
             />
@@ -347,7 +399,7 @@ function App() {
 
           {currentView === 'symptom-checker' && (
             <SymptomCheckerView
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
               analyzeSymptomsFn={analyzeSymptoms}
               setFilterDepartment={setFilterDepartment}
             />
@@ -373,7 +425,7 @@ function App() {
             <TriageHistory
               history={triageHistory}
               onClearHistory={handleClearHistory}
-              setCurrentView={setCurrentView}
+              setCurrentView={navigate}
             />
           )}
 

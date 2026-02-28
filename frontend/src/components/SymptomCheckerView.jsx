@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { HeartPulse, Send, Loader2, AlertTriangle, CheckCircle2, UserSearch, ArrowRight, Stethoscope } from 'lucide-react';
+import EmergencyAlert from './EmergencyAlert';
 
 export default function SymptomCheckerView({ setCurrentView, analyzeSymptomsFn, setFilterDepartment }) {
     const [symptoms, setSymptoms] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
+    const [showEmergency, setShowEmergency] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!symptoms.trim()) return;
-        setIsLoading(true); setError(null); setResult(null);
+        setIsLoading(true); setError(null); setResult(null); setShowEmergency(false);
         try {
             const res = await analyzeSymptomsFn(symptoms);
             setResult(res);
+            if (res.urgency === 5) setShowEmergency(true); // trigger SOS alert
         } catch (err) {
             setError(err.message || 'Failed to analyze symptoms.');
         } finally { setIsLoading(false); }
@@ -39,6 +42,15 @@ export default function SymptomCheckerView({ setCurrentView, analyzeSymptomsFn, 
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto py-8 px-4">
+
+            {/* Full-screen SOS Emergency Modal for Urgency 5 */}
+            {showEmergency && result && (
+                <EmergencyAlert
+                    triageResult={result}
+                    onProceedToBooking={() => { setShowEmergency(false); setCurrentView('booking'); }}
+                    onDismiss={() => { setShowEmergency(false); setResult(null); setSymptoms(''); }}
+                />
+            )}
             <div className="mb-6">
                 <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
