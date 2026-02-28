@@ -185,6 +185,19 @@ export default function QueryView({
                             </p>
                             <p className="text-slate-600 text-sm">{triageResult.recommendation}</p>
                         </div>
+
+                        {triageResult.tips && triageResult.tips.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                    <Sparkles className="w-3.5 h-3.5" /> Home Remedies & Tips
+                                </p>
+                                <ul className="space-y-1.5 list-disc list-inside text-sm text-blue-900">
+                                    {triageResult.tips.map((tip, idx) => (
+                                        <li key={idx}>{tip}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     {/* Actions */}

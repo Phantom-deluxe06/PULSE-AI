@@ -78,6 +78,22 @@ export default function BookingConfirmation({ appointment, onGoToDashboard }) {
                 </div>
             </div>
 
+            {/* High Urgency SMS Mockup */}
+            {appointment.urgency >= 4 && (
+                <div className="w-full max-w-md mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-4 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                        <span className="text-xl">📱</span>
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-red-900 mb-1">Automated SMS Alert Sent</p>
+                        <p className="text-xs text-red-700 font-medium">
+                            "CRITICAL PRIORITY: Incoming Urgency {appointment.urgency} patient ({appointment.patientName}) to {appointment.department}. ETA: {appointment.time}. Please prepare."
+                        </p>
+                        <p className="text-[10px] text-red-500 mt-2 font-bold tracking-wider uppercase">On-Call Staff Notified</p>
+                    </div>
+                </div>
+            )}
+
             {/* Auto-redirect notice */}
             <p className="text-sm text-slate-400 mt-6 animate-pulse">Redirecting to Dashboard in a few seconds...</p>
 

@@ -181,10 +181,15 @@ export async function saveAppointment(appointment) {
 
 export async function getAppointments() {
     if (isSupabaseConfigured) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
         const { data, error } = await supabase
             .from('appointments')
             .select('*')
+            .eq('user_id', user.id)
             .order('created_at', { ascending: false });
+
         if (error) throw error;
         return data.map(db => ({
             id: db.id,
@@ -199,10 +204,70 @@ export async function getAppointments() {
             createdAt: db.created_at
         }));
     }
+    // localStorage fallback
     try {
         const saved = localStorage.getItem(STORAGE_APPOINTMENTS);
         return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
+    } catch {
+        return [];
+    }
+}
+
+export async function getAllAppointments() {
+    if (isSupabaseConfigured) {
+        const { data, error } = await supabase
+            .from('appointments')
+            .select('*')
+            .order('urgency', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data.map(db => ({
+            id: db.id,
+            patientName: db.patient_name,
+            department: db.department,
+            date: db.appointment_date,
+            time: db.appointment_time,
+            urgency: db.urgency,
+            status: db.status,
+            triageSummary: db.triage_summary,
+            recommendation: db.recommendation,
+            createdAt: db.created_at
+        }));
+    }
+    // localStorage fallback
+    try {
+        const saved = localStorage.getItem(STORAGE_APPOINTMENTS);
+        return saved ? JSON.parse(saved).sort((a, b) => b.urgency - a.urgency) : [];
+    } catch {
+        return [];
+    }
+}
+
+export async function updateAppointmentStatus(appointmentId, newStatus) {
+    if (isSupabaseConfigured) {
+        const { error } = await supabase
+            .from('appointments')
+            .update({ status: newStatus })
+            .eq('id', appointmentId);
+
+        if (error) throw error;
+        return;
+    }
+    // localStorage fallback
+    try {
+        const saved = localStorage.getItem(STORAGE_APPOINTMENTS);
+        if (saved) {
+            const arr = JSON.parse(saved);
+            const idx = arr.findIndex(a => a.id === appointmentId);
+            if (idx > -1) {
+                arr[idx].status = newStatus;
+                localStorage.setItem(STORAGE_APPOINTMENTS, JSON.stringify(arr));
+            }
+        }
+    } catch {
+        // ignore
+    }
 }
 
 // ==================== TRIAGE HISTORY ====================

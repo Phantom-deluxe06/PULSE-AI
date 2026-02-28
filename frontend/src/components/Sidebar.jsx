@@ -9,7 +9,7 @@ const navItems = [
     { id: 'records', label: 'Medical Records', icon: FileText },
 ];
 
-export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout }) {
+export default function Sidebar({ currentView, setCurrentView, currentUser, onLogout, isAdmin }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -76,6 +76,18 @@ export default function Sidebar({ currentView, setCurrentView, currentUser, onLo
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
                     <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Main Menu</p>
+                    {isAdmin && (
+                        <button
+                            onClick={() => { setCurrentView('admin-dashboard'); setIsOpen(false); }}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all border mb-2 ${currentView === 'admin-dashboard'
+                                ? 'bg-red-50 text-red-700 font-bold shadow-sm border-red-100'
+                                : 'text-red-600 hover:bg-red-50 border-transparent'
+                                }`}
+                        >
+                            <span className="w-5 h-5 flex items-center justify-center">🏥</span>
+                            Doctor Portal
+                        </button>
+                    )}
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = currentView === item.id;

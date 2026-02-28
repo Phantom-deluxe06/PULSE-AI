@@ -17,6 +17,7 @@ import QueryView from './components/QueryView';
 import EmergencyAlert from './components/EmergencyAlert';
 import BookingConfirmation from './components/BookingConfirmation';
 import TriageHistory from './components/TriageHistory';
+import AdminDashboardView from './components/AdminDashboardView';
 import { analyzeSymptoms } from './api';
 import { TIME_SLOTS } from './constants';
 import { login as authLogin, signup as authSignup, logout as authLogout, getCurrentUser } from './utils/auth';
@@ -42,8 +43,11 @@ function saveToStorage(key, data) {
 }
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(getCurrentUser);
-  const [currentView, setCurrentView] = useState(currentUser ? 'dashboard' : 'home');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
+  const [currentView, setCurrentView] = useState('home');
+
+  const isAdmin = currentUser?.email === 'admin@pulse.ai';
 
   // Core State
   const [appointments, setAppointments] = useState(() => loadFromStorage(STORAGE_APPOINTMENTS));
@@ -67,6 +71,21 @@ function App() {
 
   // Find Doctor filter from Symptom Checker
   const [filterDepartment, setFilterDepartment] = useState(null);
+
+  // Initialize auth state
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+      if (session?.user && currentView === 'home') setCurrentView('dashboard');
+      setAuthInitialized(true);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [currentView]);
 
   // Persist to localStorage
   useEffect(() => { saveToStorage(STORAGE_APPOINTMENTS, appointments); }, [appointments]);
@@ -185,8 +204,13 @@ function App() {
   const isPublicView = publicViews.includes(currentView);
 
   // If not logged in and trying to access private views, redirect
-  if (!currentUser && !isPublicView) {
+  if (authInitialized && !currentUser && !isPublicView) {
     setCurrentView('home');
+    return null; // Or render a loading spinner if authInitialized is false
+  }
+
+  // Render nothing until authentication state is initialized
+  if (!authInitialized) {
     return null;
   }
 
@@ -198,7 +222,11 @@ function App() {
         <Sidebar
           currentView={currentView}
           setCurrentView={setCurrentView}
-          currentUser={currentUser}
+          currentUser={{
+            name: currentUser.user_metadata?.full_name || currentUser.email,
+            email: currentUser.email
+          }}
+          isAdmin={isAdmin}
           onLogout={handleLogout}
         />
       )}
@@ -347,6 +375,10 @@ function App() {
               onClearHistory={handleClearHistory}
               setCurrentView={setCurrentView}
             />
+          )}
+
+          {currentView === 'admin-dashboard' && isAdmin && (
+            <AdminDashboardView />
           )}
         </div>
       </main>

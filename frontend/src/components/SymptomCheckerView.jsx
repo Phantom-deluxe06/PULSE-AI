@@ -87,6 +87,20 @@ export default function SymptomCheckerView({ setCurrentView, analyzeSymptomsFn, 
                         </div>
                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-100"><p className="font-bold text-slate-800 text-sm mb-1">Summary</p><p className="text-slate-600 text-sm leading-relaxed">{result.summary}</p></div>
                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-100"><p className="font-bold text-slate-800 text-sm mb-1">Recommendation</p><p className="text-slate-600 text-sm leading-relaxed">{result.recommendation}</p></div>
+
+                        {result.tips && result.tips.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                <p className="font-bold text-blue-800 text-sm mb-2 flex items-center gap-1">
+                                    <span className="text-blue-500">✨</span> Home Remedies & General Tips
+                                </p>
+                                <ul className="space-y-1.5 list-disc list-inside text-sm text-blue-900 leading-relaxed">
+                                    {result.tips.map((tip, idx) => (
+                                        <li key={idx}>{tip}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         <button onClick={handleViewDoctors} className="w-full group flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all">
                             <UserSearch className="w-5 h-5" /> View Recommended Doctors <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </button>

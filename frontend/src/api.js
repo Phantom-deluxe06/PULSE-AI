@@ -17,7 +17,8 @@ export async function analyzeSymptoms(symptomText) {
             result.urgency >= 1 &&
             result.urgency <= 5 &&
             typeof result.summary === "string" &&
-            typeof result.recommendation === "string"
+            typeof result.recommendation === "string" &&
+            Array.isArray(result.tips)
         );
     }
 
@@ -28,7 +29,10 @@ Required JSON format:
   "department": "<one of: General Medicine, Cardiology, Neurology, Pediatrics, Orthopedics>",
   "urgency": <integer 1-5>,
   "summary": "<one sentence summary of the suspected issue>",
-  "recommendation": "<brief advice for the patient>"
+  "recommendation": "<brief advice for the patient>",
+  "tips": [
+    "<Provide 2-3 general wellness tips, home remedies, or encouraging motivation related to their specific symptoms>"
+  ]
 }
 
 Patient symptoms: "${symptomText}"`;
@@ -86,13 +90,16 @@ Patient symptoms: "${symptomText}"`;
         return parsed;
     };
 
-    // Retry up to 3 times on failure
-    for (let i = 0; i < 3; i++) {
+    // Exponential backoff for AI API calls (5 retries: 1s, 2s, 4s, 8s, 16s)
+    const maxRetries = 5;
+    for (let i = 0; i < maxRetries; i++) {
         try {
             return await makeRequest();
         } catch (err) {
-            if (i === 2) throw err;
-            await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+            if (i === maxRetries - 1) throw err;
+            const delay = Math.pow(2, i) * 1000;
+            console.warn(`AI API call failed. Retrying in ${delay / 1000}s...`);
+            await new Promise(r => setTimeout(r, delay));
         }
     }
 }
