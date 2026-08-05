@@ -1,4 +1,4 @@
-# PULSE AI — Patient Urgency Logic & Scheduling Engine
+# PULSE AI — Patient Urgency Logic & Scheduling Engines
 
 **PULSE AI** is an intelligent, AI-driven patient triage and appointment management system designed to reduce "friction-to-care." Instead of static forms, it uses a conversational AI interface (powered by Google Gemini) to understand patient symptoms in natural language, assess medical urgency, route patients to the correct specialist, and facilitate instant bookings.
 
